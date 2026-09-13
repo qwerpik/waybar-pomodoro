@@ -6,9 +6,9 @@
 
 ## 📑 Table of Contents
 
-1. [Global Options and Flags](#-global-options-and-flags)
-2. [Command Reference](#-command-reference)
-3. [Practical CLI Examples](#-practical-cli-examples)
+1. [Global Options and Flags](#global-options-and-flags)
+2. [Command Reference](#command-reference)
+3. [Practical CLI Examples](#practical-cli-examples)
    - [Status Polling](#1-status-polling)
    - [Plain Text Output](#2-plain-text-output)
    - [Ad-Hoc Timers](#3-ad-hoc-timers)
@@ -16,15 +16,15 @@
    - [Statistics and Data Export](#5-statistics-and-data-export)
    - [Configuration Management](#6-configuration-management)
    - [Testing Alerts](#7-testing-alerts)
-4. [Window Manager Keybinding Configurations](#-window-manager-keybinding-configurations)
+4. [Window Manager Keybinding Configurations](#window-manager-keybinding-configurations)
    - [Hyprland](#1-hyprland)
    - [Sway and i3](#2-sway-and-i3)
    - [MangoWM](#3-mangowm)
-5. [Scripting Tips and Automation](#-scripting-tips-and-automation)
-   - [Custom Status Bars](#1-custom-status-bars-polybar-i3blocks-tmux)
-   - [Interactive Menu Launcher](#2-interactive-launcher-menu-rofi--wofi--dmenu)
+5. [Scripting Tips and Automation](#scripting-tips-and-automation)
+   - [Custom Status Bars](#1-custom-status-bars)
+   - [Interactive Launcher Menu](#2-interactive-launcher-menu)
    - [Desktop Notification Hooks](#3-desktop-notification-hooks)
-6. [Related Documentation](#-related-documentation)
+6. [Related Documentation](#related-documentation)
 
 ---
 
@@ -301,7 +301,7 @@ mango-bind --key "Super+Shift+minus" --exec "waybar-pomodoro adjust -1m"
 
 ## 🛠️ Scripting Tips and Automation
 
-### 1. Custom Status Bars (Polybar, i3blocks, Tmux)
+### 1. Custom Status Bars
 
 If you use a different status bar or terminal multiplexer, `waybar-pomodoro` integrates cleanly:
 
@@ -327,7 +327,7 @@ scroll-down = waybar-pomodoro adjust -1m
 
 ---
 
-### 2. Interactive Launcher Menu (Rofi / Wofi / Dmenu)
+### 2. Interactive Launcher Menu
 
 Create a convenient GUI popup menu to control `waybar-pomodoro`:
 
