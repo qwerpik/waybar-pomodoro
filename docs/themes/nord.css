@@ -1,0 +1,29 @@
+/* Nord Theme for waybar-pomodoro */
+#custom-pomodoro {
+    background-color: #2e3440;
+    color: #eceff4;
+    padding: 0px 14px;
+    border-radius: 8px;
+    margin: 0px 4px;
+}
+
+#custom-pomodoro.stopped,
+#custom-pomodoro.idle {
+    background-color: #3b4252;
+    color: #d8dee9;
+}
+
+#custom-pomodoro.work {
+    background-color: #bf616a;
+    color: #2e3440;
+}
+
+#custom-pomodoro.paused {
+    background-color: #ebcb8b;
+    color: #2e3440;
+}
+
+#custom-pomodoro.break {
+    background-color: #a3be8c;
+    color: #2e3440;
+}

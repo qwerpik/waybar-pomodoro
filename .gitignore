@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Temporary / test files
+.pytest_cache/
+.coverage
+htmlcov/
+*.tmp
+*.log
+
+# User local data during local tests
+state.json
+stats.json

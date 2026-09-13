@@ -1,0 +1,29 @@
+/* Catppuccin Mocha Theme for waybar-pomodoro */
+#custom-pomodoro {
+    background-color: #181825;
+    color: #cdd6f4;
+    padding: 0px 14px;
+    border-radius: 12px;
+    margin: 0px 4px;
+}
+
+#custom-pomodoro.stopped,
+#custom-pomodoro.idle {
+    background-color: #313244;
+    color: #a6adc8;
+}
+
+#custom-pomodoro.work {
+    background-color: #f38ba8;
+    color: #11111b;
+}
+
+#custom-pomodoro.paused {
+    background-color: #f9e2af;
+    color: #11111b;
+}
+
+#custom-pomodoro.break {
+    background-color: #a6e3a1;
+    color: #11111b;
+}

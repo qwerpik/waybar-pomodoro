@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+# Add src to sys.path if running directly from repo clone
+repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+src_dir = os.path.join(repo_root, "src")
+if os.path.isdir(src_dir) and src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
+from waybar_pomodoro.cli import main
+
+if __name__ == "__main__":
+    sys.exit(main())

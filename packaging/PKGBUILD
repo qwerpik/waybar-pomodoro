@@ -1,0 +1,36 @@
+# Maintainer: qwerpik <qwerpik@users.noreply.github.com>
+pkgname=waybar-pomodoro-git
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A lightweight, customizable Pomodoro timer module for Waybar"
+arch=('any')
+url="https://github.com/qwerpik/waybar-pomodoro"
+license=('MIT')
+depends=('python>=3.8' 'libnotify')
+optdepends=(
+    'libcanberra: For notification sound effects'
+    'pulseaudio-utils: Alternative sound playback via paplay'
+    'pipewire-audio: Alternative sound playback via pw-play'
+)
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+provides=('waybar-pomodoro')
+conflicts=('waybar-pomodoro')
+source=("git+https://github.com/qwerpik/waybar-pomodoro.git")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "waybar-pomodoro"
+    git describe --long --tags --abbrev=7 2>/dev/null | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' || echo "1.0.0"
+}
+
+build() {
+    cd "waybar-pomodoro"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "waybar-pomodoro"
+    python -m installer --destdir="$pkgdir" dist/*.whl
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

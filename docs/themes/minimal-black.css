@@ -1,0 +1,29 @@
+/* Minimal Black Theme for waybar-pomodoro */
+#custom-pomodoro {
+    background-color: #1b1a1a;
+    color: #ebdbb2;
+    padding: 0px 14px;
+    border-radius: 100px;
+    margin: 0px 4px;
+}
+
+#custom-pomodoro.stopped,
+#custom-pomodoro.idle {
+    background-color: #1b1a1a;
+    color: #ebdbb2;
+}
+
+#custom-pomodoro.work {
+    background-color: #1b1a1a;
+    color: #ebdbb2;
+}
+
+#custom-pomodoro.paused {
+    background-color: #1b1a1a;
+    color: #928374;
+}
+
+#custom-pomodoro.break {
+    background-color: #1b1a1a;
+    color: #b8bb26;
+}

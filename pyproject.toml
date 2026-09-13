@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "waybar-pomodoro"
+version = "1.0.0"
+description = "A lightweight, customizable Pomodoro timer module for Waybar"
+readme = "README.md"
+authors = [{ name = "qwerpik" }]
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: X11 Applications",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Desktop Environment",
+    "Topic :: Utilities",
+]
+keywords = ["waybar", "pomodoro", "timer", "productivity", "linux", "wayland", "status-bar"]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+waybar-pomodoro = "waybar_pomodoro.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/qwerpik/waybar-pomodoro"
+Repository = "https://github.com/qwerpik/waybar-pomodoro.git"
+Issues = "https://github.com/qwerpik/waybar-pomodoro/issues"

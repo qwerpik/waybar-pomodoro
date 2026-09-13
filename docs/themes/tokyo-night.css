@@ -1,0 +1,29 @@
+/* Tokyo Night Theme for waybar-pomodoro */
+#custom-pomodoro {
+    background-color: #1a1b26;
+    color: #c0caf5;
+    padding: 0px 14px;
+    border-radius: 12px;
+    margin: 0px 4px;
+}
+
+#custom-pomodoro.stopped,
+#custom-pomodoro.idle {
+    background-color: #24283b;
+    color: #565f89;
+}
+
+#custom-pomodoro.work {
+    background-color: #f7768e;
+    color: #1a1b26;
+}
+
+#custom-pomodoro.paused {
+    background-color: #e0af68;
+    color: #1a1b26;
+}
+
+#custom-pomodoro.break {
+    background-color: #9ece6a;
+    color: #1a1b26;
+}
