@@ -44,7 +44,16 @@ echo ""
 
 case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
-    *) echo "⚠️  Note: '$BIN_DIR' is not in your PATH. Please add it to your shell config." ;;
+    *)
+        echo "⚠️  WARNING: '$BIN_DIR' is not in your PATH!"
+        echo "   Waybar will not be able to execute 'waybar-pomodoro' until you add it."
+        echo ""
+        echo "   To add it permanently, append one of the following to your shell config:"
+        echo "     • Bash (~/.bashrc):        export PATH=\"\$HOME/.local/bin:\$PATH\""
+        echo "     • Zsh (~/.zshrc):          export PATH=\"\$HOME/.local/bin:\$PATH\""
+        echo "     • Fish (config.fish):      fish_add_path \$HOME/.local/bin"
+        echo ""
+        ;;
 esac
 
 echo "=========================================================="

@@ -30,28 +30,51 @@ Designed with zero external dependencies (pure Python 3 standard library), atomi
 
 ---
 
+## 📚 Documentation & Deep Dives
+
+* 📖 **[Multi-Distribution Installation Guide](docs/INSTALLATION.md)**: Distro guides (Arch, Debian/Ubuntu PEP 668, Fedora, Nix), `$PATH` configuration, audio backend priorities, and font setup.
+* 🔬 **[Engineering Case Study & Architecture](docs/ARTICLE.md)**: Deep dive into POSIX advisory locking (`fcntl.flock`), atomic durability (`os.fsync`), system suspend drift detection, and Pango progress rendering.
+* 🚀 **[Showcase & Community Pack](docs/SHOWCASE.md)**: Reddit post templates, release notes, and configuration snippets for **Hyprland**, **Sway**, and **MangoWM**.
+* 🎨 **[CSS Capsule Themes](docs/themes/)**: Modern pill badges for Catppuccin Mocha, Dracula, Gruvbox, Nord, Tokyo Night, and Minimal Black.
+
+---
+
 ## 🚀 Installation
 
-### Option 1: Quick Install Script
+### 🌐 Multi-Distribution Quick Matrix
+
+For comprehensive distribution-specific guides, PEP 668 mitigation, `$PATH` setup, and audio backends, see **[`docs/INSTALLATION.md`](docs/INSTALLATION.md)**.
+
+| Distribution | Recommended Method | Command |
+| :--- | :--- | :--- |
+| **Arch Linux / Artix** | Local PKGBUILD | `cd packaging && makepkg -si` |
+| **Debian / Ubuntu / Mint** | `pipx` (PEP 668 safe) | `pipx install git+https://github.com/mangowm/waybar-pomodoro.git` |
+| **Fedora** | `pipx` or `./install.sh` | `pipx install git+https://github.com/mangowm/waybar-pomodoro.git` |
+| **NixOS / Nix** | Nix Flake / `nix-shell` | See [`docs/INSTALLATION.md`](docs/INSTALLATION.md#4-nixos--nix) |
+| **Any Linux (User)** | Standalone Installer | `./install.sh` |
+
+---
+
+### Option 1: Quick Install Script (Zero Dependencies)
 
 Clone the repository and run the install script:
 
 ```bash
-git clone https://github.com/qwerpik/waybar-pomodoro.git
+git clone https://github.com/mangowm/waybar-pomodoro.git
 cd waybar-pomodoro
 ./install.sh
 ```
 
 This installs the binary to `~/.local/bin/waybar-pomodoro` and creates a default config in `~/.config/waybar-pomodoro/config.json`.
 
-*(Ensure `~/.local/bin` is in your `$PATH`)*
+*(Ensure `~/.local/bin` is in your `$PATH` — see [`docs/INSTALLATION.md`](docs/INSTALLATION.md#1-verifying-and-adding-localbin-to-path))*
 
-### Option 2: Pipx (Recommended for standalone CLI)
+### Option 2: Pipx (Recommended for Debian, Ubuntu, Fedora)
 
-Install directly from GitHub without cloning:
+Install isolated from GitHub without cloning:
 
 ```bash
-pipx install git+https://github.com/qwerpik/waybar-pomodoro.git
+pipx install git+https://github.com/mangowm/waybar-pomodoro.git
 ```
 
 Or from a local clone:
