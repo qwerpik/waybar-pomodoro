@@ -28,6 +28,7 @@
 
 ---
 
+<a id="global-options-and-flags"></a>
 ## ⚙️ Global Options and Flags
 
 Global options can be supplied to `waybar-pomodoro` before any subcommand to override configuration parameters dynamically:
@@ -49,6 +50,7 @@ waybar-pomodoro -w 50 -s 10 start
 
 ---
 
+<a id="command-reference"></a>
 ## 📋 Command Reference
 
 Below is the complete matrix of all subcommands supported by `waybar-pomodoro`:
@@ -71,6 +73,7 @@ Below is the complete matrix of all subcommands supported by `waybar-pomodoro`:
 
 ---
 
+<a id="practical-cli-examples"></a>
 ## 💡 Practical CLI Examples
 
 ### 1. Status Polling
@@ -227,6 +230,7 @@ waybar-pomodoro test-alert
 
 ---
 
+<a id="window-manager-keybinding-configurations"></a>
 ## 🖥️ Window Manager Keybinding Configurations
 
 Bind global keyboard shortcuts to manage your Pomodoro sessions from anywhere in your workflow.
@@ -241,17 +245,17 @@ Add these bindings to `~/.config/hypr/hyprland.conf`:
 # ==========================================
 
 # Super + P: Toggle timer (start / pause / resume)
-bind = , P, exec, waybar-pomodoro toggle
+bind = $mainMod, P, exec, waybar-pomodoro toggle
 
 # Super + Shift + P: Reset timer back to work duration
-bind =  SHIFT, P, exec, waybar-pomodoro reset
+bind = $mainMod SHIFT, P, exec, waybar-pomodoro reset
 
 # Super + Alt + P: Skip current phase (work <-> break)
-bind =  ALT, P, exec, waybar-pomodoro skip
+bind = $mainMod ALT, P, exec, waybar-pomodoro skip
 
 # Super + Shift + Plus / Minus: Adjust time on the fly
-bind =  SHIFT, equal, exec, waybar-pomodoro adjust +5m
-bind =  SHIFT, minus, exec, waybar-pomodoro adjust -1m
+bind = $mainMod SHIFT, equal, exec, waybar-pomodoro adjust +5m
+bind = $mainMod SHIFT, minus, exec, waybar-pomodoro adjust -1m
 ```
 
 ---
@@ -266,17 +270,17 @@ Add these bindings to `~/.config/sway/config` or `~/.config/i3/config`:
 # ==========================================
 
 # Mod + p: Toggle timer (start / pause / resume)
-bindsym +p exec waybar-pomodoro toggle
+bindsym $mod+p exec waybar-pomodoro toggle
 
 # Mod + Shift + p: Reset timer
-bindsym +Shift+p exec waybar-pomodoro reset
+bindsym $mod+Shift+p exec waybar-pomodoro reset
 
 # Mod + Alt + p: Skip phase
-bindsym +Mod1+p exec waybar-pomodoro skip
+bindsym $mod+Mod1+p exec waybar-pomodoro skip
 
 # Mod + Shift + ] / [: Adjust time on the fly
-bindsym +Shift+bracketright exec waybar-pomodoro adjust +5m
-bindsym +Shift+bracketleft exec waybar-pomodoro adjust -5m
+bindsym $mod+Shift+bracketright exec waybar-pomodoro adjust +5m
+bindsym $mod+Shift+bracketleft exec waybar-pomodoro adjust -5m
 ```
 
 ---
@@ -299,6 +303,7 @@ mango-bind --key "Super+Shift+minus" --exec "waybar-pomodoro adjust -1m"
 
 ---
 
+<a id="scripting-tips-and-automation"></a>
 ## 🛠️ Scripting Tips and Automation
 
 ### 1. Custom Status Bars
@@ -380,22 +385,30 @@ esac
 
 ### 3. Desktop Notification Hooks
 
-You can inspect the remaining time programmatically to trigger custom hooks or automate desktop modes (such as enabling Do Not Disturb):
+You can inspect the timer state programmatically to trigger custom hooks or automate desktop modes (such as toggling "Do Not Disturb" during focus sessions):
 
 ```bash
 #!/usr/bin/env bash
-# Check if timer is actively running
-SECONDS_LEFT=$(waybar-pomodoro time-left -s)
+# Check if timer is actively running in focus mode
+STATUS=$(waybar-pomodoro status)
 
-if [ "$SECONDS_LEFT" -gt 0 ]; then
+if echo "$STATUS" | grep -q '"class": "[^"]*work' && ! echo "$STATUS" | grep -q 'paused'; then
+    SECONDS_LEFT=$(waybar-pomodoro time-left -s)
     echo "Focus mode active: $SECONDS_LEFT seconds remaining."
+    # Example hook: enable Do Not Disturb mode
+    # makoctl mode -a dnd
+elif echo "$STATUS" | grep -q 'paused'; then
+    echo "Timer is paused."
 else
-    echo "Timer is idle or complete."
+    echo "Timer is idle or in break."
+    # Example hook: disable Do Not Disturb mode
+    # makoctl mode -r dnd
 fi
 ```
 
 ---
 
+<a id="related-documentation"></a>
 ## 🔗 Related Documentation
 
 * 📖 **[Main README](../README.md)**: Overview, features, and quickstart.

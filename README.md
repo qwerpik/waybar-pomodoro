@@ -32,6 +32,7 @@ Designed with zero external dependencies (pure Python 3 standard library), atomi
 
 ---
 
+<a id="features"></a>
 ## ✨ Features
 
 - **⚡ Zero External Dependencies**: Written in pure Python 3 using standard libraries. No bloated virtual environments or pip dependencies required.
@@ -61,6 +62,7 @@ Designed with zero external dependencies (pure Python 3 standard library), atomi
 
 ---
 
+<a id="installation"></a>
 ## 🚀 Installation
 
 ### 🌐 Multi-Distribution Quick Matrix
@@ -127,6 +129,7 @@ programs.waybar-pomodoro.enable = true;
 
 ---
 
+<a id="waybar-configuration"></a>
 ## ⚙️ Waybar Configuration
 
 ### 1. Add module to `~/.config/waybar/config.jsonc`
@@ -249,6 +252,7 @@ Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a
 }
 ```
 
+<a id="theme-presets"></a>
 ### 🎨 Theme Presets
 
 Ready-to-use capsule pill stylesheets located in [`docs/themes/`](docs/themes/):
