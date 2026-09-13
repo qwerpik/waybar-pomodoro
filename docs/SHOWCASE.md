@@ -135,6 +135,8 @@ export PATH="$HOME/.local/bin:$PATH"
 mango-bind --key "Super+p" --exec "waybar-pomodoro toggle"
 mango-bind --key "Super+Shift+p" --exec "waybar-pomodoro reset"
 mango-bind --key "Super+Alt+p" --exec "waybar-pomodoro skip"
+mango-bind --key "Super+Shift+equal" --exec "waybar-pomodoro adjust +5m"
+mango-bind --key "Super+Shift+minus" --exec "waybar-pomodoro adjust -1m"
 ```
 
 ---

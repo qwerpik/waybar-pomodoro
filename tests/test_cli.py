@@ -97,7 +97,45 @@ class TestCLI(unittest.TestCase):
                 main(base_args + ["status", "--plain"])
             self.assertEqual(f.getvalue().strip(), "35:00")
 
-            # 7. stop command
+            # 7. pause, resume, toggle, skip
+            ret = main(base_args + ["pause"])
+            self.assertEqual(ret, 0)
+            f = io.StringIO()
+            with redirect_stdout(f):
+                main(base_args + ["status"])
+            self.assertEqual(json.loads(f.getvalue().strip())["alt"], "paused")
+
+            ret = main(base_args + ["resume"])
+            self.assertEqual(ret, 0)
+            f = io.StringIO()
+            with redirect_stdout(f):
+                main(base_args + ["status"])
+            self.assertEqual(json.loads(f.getvalue().strip())["alt"], "work")
+
+            ret = main(base_args + ["toggle"])
+            self.assertEqual(ret, 0)
+            f = io.StringIO()
+            with redirect_stdout(f):
+                main(base_args + ["status"])
+            self.assertEqual(json.loads(f.getvalue().strip())["alt"], "paused")
+
+            ret = main(base_args + ["skip"])
+            self.assertEqual(ret, 0)
+            f = io.StringIO()
+            with redirect_stdout(f):
+                main(base_args + ["status"])
+            payload = json.loads(f.getvalue().strip())
+            self.assertIn("short-break", payload["class"])
+
+            # Resume running the break
+            ret = main(base_args + ["resume"])
+            self.assertEqual(ret, 0)
+            f = io.StringIO()
+            with redirect_stdout(f):
+                main(base_args + ["status"])
+            self.assertEqual(json.loads(f.getvalue().strip())["alt"], "short_break")
+
+            # 8. stop command
             ret = main(base_args + ["stop"])
             self.assertEqual(ret, 0)
 
@@ -106,7 +144,7 @@ class TestCLI(unittest.TestCase):
                 main(base_args + ["status", "--plain"])
             self.assertEqual(f.getvalue().strip(), "20:00")
 
-            # 8. stats, stats --json, stats --csv, stats --reset
+            # 9. stats, stats --json, stats --csv, stats --reset
             f = io.StringIO()
             with redirect_stdout(f):
                 ret = main(base_args + ["stats"])
@@ -132,20 +170,27 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(ret, 0)
             self.assertIn("reset successfully", f.getvalue())
 
-            # 9. test-alert
+            # 10. test-alert
             f = io.StringIO()
             with redirect_stdout(f):
                 ret = main(base_args + ["test-alert"])
             self.assertEqual(ret, 0)
             self.assertIn("Test alert sent", f.getvalue())
 
-            # 10. config --show
+            # 11. config --show & config --init
             f = io.StringIO()
             with redirect_stdout(f):
                 ret = main(base_args + ["config", "--show"])
             self.assertEqual(ret, 0)
             cfg_data = json.loads(f.getvalue().strip())
             self.assertEqual(cfg_data["work_duration"], 20)
+
+            init_cfg = Path(tmpdir) / "init_cfg.json"
+            f = io.StringIO()
+            with redirect_stdout(f):
+                ret = main(["-c", str(init_cfg), "config", "--init"])
+            self.assertEqual(ret, 0)
+            self.assertTrue(init_cfg.exists())
 
 
 if __name__ == "__main__":

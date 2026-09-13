@@ -76,6 +76,7 @@ Below is the complete matrix of all subcommands supported by `waybar-pomodoro`:
 <a id="practical-cli-examples"></a>
 ## 💡 Practical CLI Examples
 
+<a id="status-polling"></a>
 <a id="1-status-polling"></a>
 ### 1. Status Polling
 
@@ -105,6 +106,7 @@ watch -n 1 waybar-pomodoro status --plain
 
 ---
 
+<a id="plain-text-output"></a>
 <a id="2-plain-text-output"></a>
 ### 2. Plain Text Output
 
@@ -126,6 +128,7 @@ waybar-pomodoro time-left -s
 
 ---
 
+<a id="ad-hoc-timers"></a>
 <a id="3-ad-hoc-timers"></a>
 ### 3. Ad-Hoc Timers
 
@@ -149,6 +152,7 @@ waybar-pomodoro reset 25m
 
 ---
 
+<a id="scroll-wheel-adjustments"></a>
 <a id="4-scroll-wheel-adjustments"></a>
 ### 4. Scroll Wheel Adjustments
 
@@ -170,6 +174,7 @@ waybar-pomodoro adjust -30s
 
 ---
 
+<a id="statistics-and-data-export"></a>
 <a id="5-statistics-and-data-export"></a>
 ### 5. Statistics and Data Export
 
@@ -213,6 +218,7 @@ waybar-pomodoro stats --reset
 
 ---
 
+<a id="configuration-management"></a>
 <a id="6-configuration-management"></a>
 ### 6. Configuration Management
 
@@ -226,6 +232,7 @@ waybar-pomodoro config --init
 
 ---
 
+<a id="testing-alerts"></a>
 <a id="7-testing-alerts"></a>
 ### 7. Testing Alerts
 
@@ -242,6 +249,7 @@ waybar-pomodoro test-alert
 
 Bind global keyboard shortcuts to manage your Pomodoro sessions from anywhere in your workflow.
 
+<a id="hyprland"></a>
 <a id="1-hyprland"></a>
 ### 1. Hyprland
 
@@ -268,6 +276,9 @@ bind = $mainMod SHIFT, minus, exec, waybar-pomodoro adjust -1m
 
 ---
 
+<a id="sway-and-i3"></a>
+<a id="sway"></a>
+<a id="i3"></a>
 <a id="2-sway-and-i3"></a>
 ### 2. Sway and i3
 
@@ -294,6 +305,7 @@ bindsym $mod+Shift+bracketleft exec waybar-pomodoro adjust -5m
 
 ---
 
+<a id="mangowm"></a>
 <a id="3-mangowm"></a>
 ### 3. MangoWM
 
@@ -303,7 +315,7 @@ If using the [Mango Wayland Compositor](https://github.com/mangowm/mango), add t
 # Ensure ~/.local/bin is in PATH for Waybar and child processes
 export PATH="$HOME/.local/bin:$PATH"
 
-# MangoWM keybindings
+# MangoWM keybindings (or adjust syntax to ~/.config/mango/config.toml)
 mango-bind --key "Super+p" --exec "waybar-pomodoro toggle"
 mango-bind --key "Super+Shift+p" --exec "waybar-pomodoro reset"
 mango-bind --key "Super+Alt+p" --exec "waybar-pomodoro skip"
@@ -316,6 +328,7 @@ mango-bind --key "Super+Shift+minus" --exec "waybar-pomodoro adjust -1m"
 <a id="scripting-tips-and-automation"></a>
 ## 🛠️ Scripting Tips and Automation
 
+<a id="custom-status-bars"></a>
 <a id="1-custom-status-bars"></a>
 ### 1. Custom Status Bars
 
@@ -343,6 +356,7 @@ scroll-down = waybar-pomodoro adjust -1m
 
 ---
 
+<a id="interactive-launcher-menu"></a>
 <a id="2-interactive-launcher-menu"></a>
 ### 2. Interactive Launcher Menu
 
@@ -406,6 +420,7 @@ esac
 
 ---
 
+<a id="desktop-notification-hooks"></a>
 <a id="3-desktop-notification-hooks"></a>
 ### 3. Desktop Notification Hooks
 
