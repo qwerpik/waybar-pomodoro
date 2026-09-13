@@ -1,34 +1,46 @@
-/* Tokyo Night Theme for waybar-pomodoro */
+/* Tokyo Night Theme for waybar-pomodoro (Capsule Pill Badge) */
 #custom-pomodoro {
     background-color: #1a1b26;
     color: #c0caf5;
-    padding: 0px 14px;
-    border-radius: 12px;
-    margin: 0px 4px;
+    padding: 2px 14px;
+    margin: 3px 4px;
+    border-radius: 9999px;
+    border: 1px solid rgba(192, 202, 245, 0.12);
+    transition: all 0.2s ease-in-out;
+}
+
+#custom-pomodoro:hover {
+    border-color: rgba(192, 202, 245, 0.35);
 }
 
 #custom-pomodoro.stopped,
 #custom-pomodoro.idle {
-    background-color: #24283b;
+    background-color: #16161e;
     color: #565f89;
+    border-color: rgba(86, 95, 137, 0.2);
 }
 
 #custom-pomodoro.work {
-    background-color: #f7768e;
-    color: #1a1b26;
+    background-color: #2f1e2e;
+    color: #f7768e;
+    border-color: rgba(247, 118, 142, 0.45);
 }
 
 #custom-pomodoro.break {
-    background-color: #9ece6a;
-    color: #1a1b26;
+    background-color: #1d2d2c;
+    color: #9ece6a;
+    border-color: rgba(158, 206, 106, 0.45);
 }
 
 #custom-pomodoro.long-break {
-    background-color: #7dcfff;
-    color: #1a1b26;
+    background-color: #1a2b3c;
+    color: #7dcfff;
+    border-color: rgba(125, 207, 255, 0.45);
 }
 
 #custom-pomodoro.paused {
-    background-color: #e0af68;
-    color: #1a1b26;
+    background-color: #2b2622;
+    color: #e0af68;
+    border-color: rgba(224, 175, 104, 0.45);
+    opacity: 0.85;
 }

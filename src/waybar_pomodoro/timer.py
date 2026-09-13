@@ -19,6 +19,22 @@ from .notifier import Notifier
 from .stats import PomodoroStats
 
 
+def render_progress_bar(percentage: int, accent_color: str, length: int = 12) -> str:
+    """
+    Renders a 12-step character progress bar with Pango foreground styling.
+    Uses filled (▰) and empty (▱) glyphs.
+    """
+    clamped_pct = max(0, min(100, percentage))
+    filled_count = int(round((clamped_pct / 100.0) * length))
+    filled = "▰" * filled_count
+    empty = "▱" * (length - filled_count)
+    if filled_count == 0:
+        return f"<span alpha='30%'>{empty}</span>"
+    if empty:
+        return f"<span foreground='{accent_color}'>{filled}</span><span alpha='30%'>{empty}</span>"
+    return f"<span foreground='{accent_color}'>{filled}</span>"
+
+
 class PomodoroTimer:
     def __init__(self, config: PomodoroConfig):
         self.config = config
@@ -182,19 +198,28 @@ class PomodoroTimer:
                 state["phase"] = "long_break"
                 state["total_time"] = self.config.long_break_duration * 60
                 state["time_remaining"] = state["total_time"]
-                title = f"Pomodoro: {max_cycles} Cycles Completed!"
-                msg = f"Fantastic focus! Take a long break ({self.config.long_break_duration} min)."
+                title = f"🏆 {max_cycles} Cycles Completed! Time for a Long Break"
+                msg = (
+                    f"Outstanding focus! You've crushed <b>{max_cycles} sessions</b>.\n"
+                    f"Take a well-deserved <b>{self.config.long_break_duration} min</b> "
+                    "break to recharge."
+                )
                 urgency = self.config.notification_urgency_work_end
+                icon = "appointment-soon"
             else:
                 state["phase"] = "short_break"
                 state["total_time"] = self.config.short_break_duration * 60
                 state["time_remaining"] = state["total_time"]
-                title = f"Pomodoro Completed! ({cycle}/{max_cycles})"
-                msg = f"Good job! Take a short break ({self.config.short_break_duration} min)."
+                title = f"🍅 Focus Session Complete! ({cycle}/{max_cycles})"
+                msg = (
+                    f"Great progress on session {cycle} of {max_cycles}!\n"
+                    f"Take a quick <b>{self.config.short_break_duration} min</b> break."
+                )
                 urgency = self.config.notification_urgency_work_end
+                icon = "appointment-soon"
 
             if not was_suspended:
-                self.notifier.send_notification(title, msg, urgency=urgency)
+                self.notifier.send_notification(title, msg, urgency=urgency, icon=icon)
                 self.notifier.play_sound(self.config.sound_work_end)
 
             if self.config.auto_start_break and not was_suspended:
@@ -212,10 +237,16 @@ class PomodoroTimer:
             state["time_remaining"] = state["total_time"]
 
             if not was_suspended:
-                title = "Break Finished!"
-                msg = f"Ready for focus session {state['cycle']}/{max_cycles}? Let's work!"
+                title = "⚡ Break Finished! Ready to Focus?"
+                msg = (
+                    f"Starting focus session <b>{state['cycle']}/{max_cycles}</b> "
+                    f"({self.config.work_duration} min).\nLet's get back in the flow!"
+                )
                 self.notifier.send_notification(
-                    title, msg, urgency=self.config.notification_urgency_break_end
+                    title,
+                    msg,
+                    urgency=self.config.notification_urgency_break_end,
+                    icon="preferences-system-time",
                 )
                 self.notifier.play_sound(self.config.sound_break_end)
 
@@ -453,35 +484,52 @@ class PomodoroTimer:
         else:
             alt_field = curr_phase
 
-        # Informative tooltip with Pango markup and focus stats
+        # Determine theme accent color and state label for Pango markup
+        if curr_state == "paused":
+            accent_color = "#f9e2af"
+            state_markup = "<span foreground='#f9e2af'><b>Paused ⏸</b></span>"
+        elif curr_state == "running":
+            accent_color = "#a6e3a1" if "break" in curr_phase else "#f38ba8"
+            state_markup = "<span foreground='#a6e3a1'>Running</span>"
+        else:
+            accent_color = "#89b4fa"
+            state_markup = "<span alpha='60%'>Idle ⏱</span>"
+
+        bar = render_progress_bar(percentage, accent_color, length=12)
+
+        # Phase label with session counter
+        if curr_phase == "work":
+            header_title = (
+                f"<b>🍅 Focus Session</b> <span alpha='70%'>[{cycle}/{max_cycles}]</span>"
+            )
+        elif curr_phase == "short_break":
+            header_title = f"<b>☕ Short Break</b> <span alpha='70%'>[{cycle}/{max_cycles}]</span>"
+        else:
+            header_title = "<b>🌴 Long Break</b> <span alpha='70%'>[Reward]</span>"
+
+        # Focus statistics for tooltip
         today_stats = self.stats.get_today_stats()
         today_sessions = today_stats.get("completed_sessions", 0)
         today_mins = today_stats.get("focus_seconds", 0) // 60
         streak = self.stats.get_streak()
-
-        phase_label = {
-            "work": f"Focus ({cycle}/{max_cycles})",
-            "short_break": f"Short Break ({mins:02d}:{secs:02d})",
-            "long_break": f"Long Break ({mins:02d}:{secs:02d})",
-        }.get(curr_phase, "Focus")
-
-        state_label = {
-            "idle": "Idle",
-            "running": "Running",
-            "paused": "Paused",
-        }.get(curr_state, "Ready")
+        streak_display = (
+            f"<b>{streak}</b> day(s) 🔥" if streak > 0 else "<span alpha='60%'>0 days</span>"
+        )
 
         tooltip_lines = [
-            f"<b>Pomodoro:</b> {phase_label} [{state_label}]",
-            f"<b>Time Left:</b> {time_str} ({percentage}%)",
-            "─" * 26,
-            "• Left-click: Start / Pause",
-            "• Right-click: Reset",
-            "• Middle-click: Skip phase",
-            "• Scroll: +/- 1 min",
-            "─" * 26,
-            f"<b>Today:</b> {today_sessions} session(s) ({today_mins} min)",
-            f"<b>Streak:</b> {streak} day(s)",
+            f"{header_title}  {state_markup}",
+            f"<tt>{bar}</tt>  <b>{time_str}</b> <span alpha='60%'>({percentage}%)</span>",
+            "<span alpha='25%'>─────────────────────────────</span>",
+            "<span alpha='60%'>• Left-click:</span>   <b>Toggle / Pause</b>",
+            "<span alpha='60%'>• Right-click:</span>  <b>Reset Session</b>",
+            "<span alpha='60%'>• Middle-click:</span> <b>Skip Phase</b>",
+            "<span alpha='60%'>• Scroll:</span>       <b>±1 min</b>",
+            "<span alpha='25%'>─────────────────────────────</span>",
+            (
+                f"<span alpha='60%'>Today:</span>  <b>{today_sessions}</b> session(s) "
+                f"<span alpha='50%'>•</span> <b>{today_mins}m</b> focus"
+            ),
+            f"<span alpha='60%'>Streak:</span> {streak_display}",
         ]
 
         return {

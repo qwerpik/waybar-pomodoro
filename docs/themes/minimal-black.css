@@ -1,34 +1,46 @@
-/* Minimal Black Theme for waybar-pomodoro */
+/* Minimal Black Theme for waybar-pomodoro (Capsule Pill Badge) */
 #custom-pomodoro {
-    background-color: #1b1a1a;
-    color: #ebdbb2;
-    padding: 0px 14px;
-    border-radius: 100px;
-    margin: 0px 4px;
+    background-color: #121212;
+    color: #e0e0e0;
+    padding: 2px 14px;
+    margin: 3px 4px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease-in-out;
+}
+
+#custom-pomodoro:hover {
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 #custom-pomodoro.stopped,
 #custom-pomodoro.idle {
-    background-color: #1b1a1a;
-    color: #ebdbb2;
+    background-color: #161616;
+    color: #808080;
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 #custom-pomodoro.work {
-    background-color: #1b1a1a;
-    color: #ebdbb2;
+    background-color: #1c1516;
+    color: #f07178;
+    border-color: rgba(240, 113, 120, 0.35);
 }
 
 #custom-pomodoro.break {
-    background-color: #1b1a1a;
-    color: #b8bb26;
+    background-color: #141c16;
+    color: #c3e88d;
+    border-color: rgba(195, 232, 141, 0.35);
 }
 
 #custom-pomodoro.long-break {
-    background-color: #1b1a1a;
-    color: #8ec07c;
+    background-color: #141a1c;
+    color: #82aaff;
+    border-color: rgba(130, 170, 255, 0.35);
 }
 
 #custom-pomodoro.paused {
-    background-color: #1b1a1a;
-    color: #928374;
+    background-color: #1c1a14;
+    color: #ffcb6b;
+    border-color: rgba(255, 203, 107, 0.35);
+    opacity: 0.85;
 }

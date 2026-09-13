@@ -1,35 +1,47 @@
-/* Gruvbox Theme for waybar-pomodoro */
+/* Gruvbox Theme for waybar-pomodoro (Capsule Pill Badge) */
 #custom-pomodoro {
-    background-color: #3c3836;
+    background-color: #282828;
     color: #ebdbb2;
-    padding: 0px 14px;
-    border-radius: 100px;
-    margin: 0px 4px;
+    padding: 2px 14px;
+    margin: 3px 4px;
+    border-radius: 9999px;
+    border: 1px solid rgba(235, 219, 178, 0.12);
     font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+
+#custom-pomodoro:hover {
+    border-color: rgba(235, 219, 178, 0.35);
 }
 
 #custom-pomodoro.stopped,
 #custom-pomodoro.idle {
-    background-color: #504945;
-    color: #ebdbb2;
+    background-color: #3c3836;
+    color: #a89984;
+    border-color: rgba(168, 153, 132, 0.2);
 }
 
 #custom-pomodoro.work {
-    background-color: #ea6962;
-    color: #1d2021;
+    background-color: #382321;
+    color: #ea6962;
+    border-color: rgba(234, 105, 98, 0.45);
 }
 
 #custom-pomodoro.break {
-    background-color: #b8bb26;
-    color: #1d2021;
+    background-color: #2b331f;
+    color: #b8bb26;
+    border-color: rgba(184, 187, 38, 0.45);
 }
 
 #custom-pomodoro.long-break {
-    background-color: #8ec07c;
-    color: #1d2021;
+    background-color: #20332e;
+    color: #8ec07c;
+    border-color: rgba(142, 192, 124, 0.45);
 }
 
 #custom-pomodoro.paused {
-    background-color: #e3ac2b;
-    color: #1d2021;
+    background-color: #37311d;
+    color: #fabd2f;
+    border-color: rgba(250, 189, 47, 0.45);
+    opacity: 0.85;
 }

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from waybar_pomodoro.config import PomodoroConfig
-from waybar_pomodoro.timer import PomodoroTimer
+from waybar_pomodoro.timer import PomodoroTimer, render_progress_bar
 
 
 class TestTimer(unittest.TestCase):
@@ -239,6 +239,33 @@ class TestTimer(unittest.TestCase):
         state = self.timer.load_state()
         # Initial 25m + 10 * 1m = 35m
         self.assertEqual(state["time_remaining"], 35 * 60)
+
+    def test_render_progress_bar(self):
+        # 0%: all empty
+        bar_0 = render_progress_bar(0, "#f38ba8", length=12)
+        self.assertIn("▱" * 12, bar_0)
+        self.assertNotIn("▰", bar_0)
+
+        # 50%: 6 filled, 6 empty
+        bar_50 = render_progress_bar(50, "#f38ba8", length=12)
+        self.assertIn("▰" * 6, bar_50)
+        self.assertIn("▱" * 6, bar_50)
+        self.assertIn("#f38ba8", bar_50)
+
+        # 100%: all filled
+        bar_100 = render_progress_bar(100, "#f38ba8", length=12)
+        self.assertIn("▰" * 12, bar_100)
+        self.assertNotIn("▱", bar_100)
+
+    def test_tooltip_pango_markup(self):
+        payload = self.timer.get_status_payload()
+        tooltip = payload["tooltip"]
+        self.assertIn("<tt>", tooltip)
+        self.assertIn("Focus Session", tooltip)
+        self.assertIn("[1/4]", tooltip)
+        self.assertIn("Today:", tooltip)
+        self.assertIn("Streak:", tooltip)
+        self.assertIn("Toggle / Pause", tooltip)
 
 
 if __name__ == "__main__":

@@ -120,43 +120,80 @@ Because `waybar-pomodoro` outputs the native `alt` field (`idle`, `work`, `short
     }
 ```
 
-### 2. Style in `~/.config/waybar/style.css`
+### 2. Rich Pango Tooltip & Progress Bar
 
-#### Minimal Black Theme (Default Gruvbox / Dark)
+Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a 12-segment character progress bar, session ratio counter, controls cheat-sheet, and daily streak tracking:
+
+```text
+┌──────────────────────────────────────────────┐
+│ 🍅 Focus Session [2/4]               Running │
+│ ▰▰▰▰▰▰▱▱▱▱▱▱  12:30 (50%)                    │
+│ ───────────────────────────────────────────  │
+│ • Left-click:   Toggle / Pause               │
+│ • Right-click:  Reset Session                │
+│ • Middle-click: Skip Phase                   │
+│ • Scroll:       ±1 min                       │
+│ ───────────────────────────────────────────  │
+│ Today:  3 session(s) • 90m focus             │
+│ Streak: 5 day(s) 🔥                          │
+└──────────────────────────────────────────────┘
+```
+
+### 3. Style in `~/.config/waybar/style.css`
+
+#### Capsule Pill Badge Theme (Gruvbox Dark)
 ```css
 #custom-pomodoro {
-    background-color: #1b1a1a;
+    background-color: #282828;
     color: #ebdbb2;
-    padding: 0px 14px;
-    border-radius: 100px;
-    margin: 0px 4px;
+    padding: 2px 14px;
+    margin: 3px 4px;
+    border-radius: 9999px;
+    border: 1px solid rgba(235, 219, 178, 0.15);
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+
+#custom-pomodoro:hover {
+    border-color: rgba(235, 219, 178, 0.4);
 }
 
 #custom-pomodoro.stopped,
 #custom-pomodoro.idle {
-    background-color: #1b1a1a;
-    color: #ebdbb2;
+    background-color: #282828;
+    color: #a89984;
+    border-color: rgba(168, 153, 132, 0.25);
 }
 
 #custom-pomodoro.work {
-    background-color: #1b1a1a;
-    color: #ebdbb2;
+    background-color: #382321;
+    color: #ea6962;
+    border-color: rgba(234, 105, 98, 0.45);
 }
 
 #custom-pomodoro.break {
-    background-color: #1b1a1a;
+    background-color: #2b331f;
     color: #b8bb26;
+    border-color: rgba(184, 187, 38, 0.45);
+}
+
+#custom-pomodoro.long-break {
+    background-color: #20332e;
+    color: #8ec07c;
+    border-color: rgba(142, 192, 124, 0.45);
 }
 
 #custom-pomodoro.paused {
-    background-color: #1b1a1a;
-    color: #928374;
+    background-color: #37311d;
+    color: #fabd2f;
+    border-color: rgba(250, 189, 47, 0.45);
+    opacity: 0.85;
 }
 ```
 
-*More CSS themes (Catppuccin Mocha, Dracula, Gruvbox, Nord, Tokyo Night) are available in the [`docs/themes/`](docs/themes/) folder.*
+*All modern capsule pill badge themes (Catppuccin Mocha, Dracula, Gruvbox, Nord, Tokyo Night, Minimal Black) are available in the [`docs/themes/`](docs/themes/) folder.*
 
-### 3. Reload Waybar
+### 4. Reload Waybar
 
 ```bash
 pkill -SIGUSR2 waybar

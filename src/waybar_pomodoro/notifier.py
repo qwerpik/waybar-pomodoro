@@ -40,7 +40,7 @@ class Notifier:
         title: str,
         message: str,
         urgency: str = "normal",
-        icon: str = "alarm-clock",
+        icon: str = "preferences-system-time",
     ) -> None:
         if not self.notification_enabled:
             return
