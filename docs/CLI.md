@@ -76,6 +76,7 @@ Below is the complete matrix of all subcommands supported by `waybar-pomodoro`:
 <a id="practical-cli-examples"></a>
 ## 💡 Practical CLI Examples
 
+<a id="1-status-polling"></a>
 ### 1. Status Polling
 
 #### Waybar JSON Payload (Default)
@@ -104,6 +105,7 @@ watch -n 1 waybar-pomodoro status --plain
 
 ---
 
+<a id="2-plain-text-output"></a>
 ### 2. Plain Text Output
 
 When integrating with simpler status bars (such as Polybar, i3blocks, Tint2, or Tmux), use `--plain` or `time-left`:
@@ -124,6 +126,7 @@ waybar-pomodoro time-left -s
 
 ---
 
+<a id="3-ad-hoc-timers"></a>
 ### 3. Ad-Hoc Timers
 
 You can start or reset the timer with an explicit duration without altering your default configuration:
@@ -146,6 +149,7 @@ waybar-pomodoro reset 25m
 
 ---
 
+<a id="4-scroll-wheel-adjustments"></a>
 ### 4. Scroll Wheel Adjustments
 
 The `adjust` command modifies the current session on the fly. It is concurrency-safe and guarded by POSIX advisory file locks (`fcntl.flock`), making it safe for rapid invocation via mouse wheel events:
@@ -166,6 +170,7 @@ waybar-pomodoro adjust -30s
 
 ---
 
+<a id="5-statistics-and-data-export"></a>
 ### 5. Statistics and Data Export
 
 `waybar-pomodoro` tracks completed sessions, focus time, and daily streaks in `~/.local/share/waybar-pomodoro/stats.json`.
@@ -208,6 +213,7 @@ waybar-pomodoro stats --reset
 
 ---
 
+<a id="6-configuration-management"></a>
 ### 6. Configuration Management
 
 ```bash
@@ -220,6 +226,7 @@ waybar-pomodoro config --init
 
 ---
 
+<a id="7-testing-alerts"></a>
 ### 7. Testing Alerts
 
 Verify that desktop notifications (`notify-send`) and audio players (`canberra-gtk-play`, `pw-play`, `paplay`, `ogg123`, etc.) are functioning properly:
@@ -235,6 +242,7 @@ waybar-pomodoro test-alert
 
 Bind global keyboard shortcuts to manage your Pomodoro sessions from anywhere in your workflow.
 
+<a id="1-hyprland"></a>
 ### 1. Hyprland
 
 Add these bindings to `~/.config/hypr/hyprland.conf`:
@@ -260,6 +268,7 @@ bind = $mainMod SHIFT, minus, exec, waybar-pomodoro adjust -1m
 
 ---
 
+<a id="2-sway-and-i3"></a>
 ### 2. Sway and i3
 
 Add these bindings to `~/.config/sway/config` or `~/.config/i3/config`:
@@ -285,6 +294,7 @@ bindsym $mod+Shift+bracketleft exec waybar-pomodoro adjust -5m
 
 ---
 
+<a id="3-mangowm"></a>
 ### 3. MangoWM
 
 If using the [Mango Wayland Compositor](https://github.com/mangowm/mango), add these bindings to your startup script (`~/.config/mango/init.sh`) or configuration:
@@ -306,6 +316,7 @@ mango-bind --key "Super+Shift+minus" --exec "waybar-pomodoro adjust -1m"
 <a id="scripting-tips-and-automation"></a>
 ## 🛠️ Scripting Tips and Automation
 
+<a id="1-custom-status-bars"></a>
 ### 1. Custom Status Bars
 
 If you use a different status bar or terminal multiplexer, `waybar-pomodoro` integrates cleanly:
@@ -332,9 +343,10 @@ scroll-down = waybar-pomodoro adjust -1m
 
 ---
 
+<a id="2-interactive-launcher-menu"></a>
 ### 2. Interactive Launcher Menu
 
-Create a convenient GUI popup menu to control `waybar-pomodoro`:
+Create a convenient GUI popup menu to control `waybar-pomodoro` (requires `rofi`, `wofi`, or `dmenu`, and optionally `libnotify` for statistics notifications):
 
 Save this script as `~/.local/bin/pomodoro-menu` (make it executable with `chmod +x`):
 
@@ -342,13 +354,16 @@ Save this script as `~/.local/bin/pomodoro-menu` (make it executable with `chmod
 #!/usr/bin/env bash
 # Interactive Pomodoro control menu using Rofi, Wofi, or Dmenu
 
-MENU_CMD="rofi -dmenu -i -p '🍅 Pomodoro'"
-if ! command -v rofi >/dev/null 2>&1; then
-    if command -v wofi >/dev/null 2>&1; then
-        MENU_CMD="wofi --dmenu --prompt '🍅 Pomodoro'"
-    else
-        MENU_CMD="dmenu -p '🍅 Pomodoro:'"
-    fi
+MENU_CMD=""
+if command -v rofi >/dev/null 2>&1; then
+    MENU_CMD="rofi -dmenu -i -p '🍅 Pomodoro'"
+elif command -v wofi >/dev/null 2>&1; then
+    MENU_CMD="wofi --dmenu --prompt '🍅 Pomodoro'"
+elif command -v dmenu >/dev/null 2>&1; then
+    MENU_CMD="dmenu -p '🍅 Pomodoro:'"
+else
+    echo "Error: rofi, wofi, or dmenu is required to display the interactive menu." >&2
+    exit 1
 fi
 
 CHOICE=$(cat << 'EOF_MENU' | eval "$MENU_CMD"
@@ -365,6 +380,10 @@ CHOICE=$(cat << 'EOF_MENU' | eval "$MENU_CMD"
 EOF_MENU
 )
 
+if [ -z "$CHOICE" ]; then
+    exit 0
+fi
+
 case "$CHOICE" in
     *"Toggle"*)    waybar-pomodoro toggle ;;
     *"Skip"*)      waybar-pomodoro skip ;;
@@ -375,7 +394,11 @@ case "$CHOICE" in
     *"+5m"*)       waybar-pomodoro adjust +5m ;;
     *"-1m"*)       waybar-pomodoro adjust -1m ;;
     *"Statistics"*)
-        notify-send "🍅 Pomodoro Statistics" "$(waybar-pomodoro stats)" -i appointment-soon
+        if command -v notify-send >/dev/null 2>&1; then
+            notify-send "🍅 Pomodoro Statistics" "$(waybar-pomodoro stats)" -i appointment-soon
+        else
+            waybar-pomodoro stats
+        fi
         ;;
     *"Stop"*)      waybar-pomodoro stop ;;
 esac
@@ -383,25 +406,35 @@ esac
 
 ---
 
+<a id="3-desktop-notification-hooks"></a>
 ### 3. Desktop Notification Hooks
 
-You can inspect the timer state programmatically to trigger custom hooks or automate desktop modes (such as toggling "Do Not Disturb" during focus sessions):
+You can inspect the timer state programmatically to trigger custom hooks or automate desktop modes (such as enabling "Do Not Disturb" during focus sessions and disabling it during breaks):
 
 ```bash
 #!/usr/bin/env bash
-# Check if timer is actively running in focus mode
+# Inspect timer status to toggle desktop "Do Not Disturb" mode
+
 STATUS=$(waybar-pomodoro status)
 
-if echo "$STATUS" | grep -q '"class": "[^"]*work' && ! echo "$STATUS" | grep -q 'paused'; then
-    SECONDS_LEFT=$(waybar-pomodoro time-left -s)
-    echo "Focus mode active: $SECONDS_LEFT seconds remaining."
-    # Example hook: enable Do Not Disturb mode
-    # makoctl mode -a dnd
-elif echo "$STATUS" | grep -q 'paused'; then
-    echo "Timer is paused."
+if command -v jq >/dev/null 2>&1; then
+    CLASS=$(echo "$STATUS" | jq -r .class)
+    ALT=$(echo "$STATUS" | jq -r .alt)
 else
-    echo "Timer is idle or in break."
-    # Example hook: disable Do Not Disturb mode
+    CLASS=$(echo "$STATUS" | grep -o '"class": "[^"]*' | cut -d'"' -f4)
+    ALT=$(echo "$STATUS" | grep -o '"alt": "[^"]*' | cut -d'"' -f4)
+fi
+
+if [[ "$CLASS" == *"work"* ]] && [[ "$CLASS" != *"paused"* ]]; then
+    SECONDS_LEFT=$(waybar-pomodoro time-left -s)
+    echo "Focus session active ($ALT): $SECONDS_LEFT seconds remaining."
+    # Hook: silence notifications during focus (e.g. Mako, Dunst, SwayNC)
+    # makoctl mode -a dnd
+elif [[ "$CLASS" == *"paused"* ]]; then
+    echo "Timer is paused ($ALT)."
+else
+    echo "Timer is idle or on break ($ALT)."
+    # Hook: re-enable notifications during breaks or idle
     # makoctl mode -r dnd
 fi
 ```

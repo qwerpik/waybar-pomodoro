@@ -244,5 +244,16 @@ Building desktop utilities that "just work" in Linux Wayland environments requir
 4. **Plan for physical hardware reality**: Sleep, suspend, and clock leaps will happen—detect them mathematically.
 5. **Embrace standard protocols**: Waybar's `{alt}`, `{percentage}`, and Pango markup allow rich interfaces without requiring bulky GUI frameworks.
 
-`waybar-pomodoro` is free, open-source software maintained under the [MangoWM](https://github.com/mangowm) organization:
-🔗 **GitHub Repository**: [https://github.com/mangowm/waybar-pomodoro](https://github.com/mangowm/waybar-pomodoro)
+`waybar-pomodoro` is free, open-source software:
+🔗 **GitHub Repository**: [https://github.com/qwerpik/waybar-pomodoro](https://github.com/qwerpik/waybar-pomodoro)
+
+---
+
+## 🔗 Related Documentation
+
+* 📖 **[Main README](../README.md)**: Overview, features, and quickstart.
+* 💻 **[CLI & Scripting Guide](CLI.md)**: Complete CLI command matrix, global flags, and window manager keybindings.
+* 📦 **[Multi-Distribution Installation Guide](INSTALLATION.md)**: Distro packages, PEP 668, `$PATH`, and audio backends.
+* 🚀 **[Showcase & Presets](SHOWCASE.md)**: Capsule themes and community showcases.
+* 🎨 **[CSS Capsule Themes](themes/)**: Ready-to-use color schemes.
+

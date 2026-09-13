@@ -25,7 +25,7 @@ Arch Linux provides cutting-edge packages where Python 3 is modern and system to
 A clean, Arch-compliant `PKGBUILD` is provided in the repository under `packaging/`.
 
 ```bash
-git clone https://github.com/mangowm/waybar-pomodoro.git
+git clone https://github.com/qwerpik/waybar-pomodoro.git
 cd waybar-pomodoro/packaging
 makepkg -si
 ```
@@ -34,7 +34,7 @@ This installs `waybar-pomodoro` cleanly to `/usr/bin/waybar-pomodoro` and tracks
 
 #### Option B: Standalone `./install.sh`
 ```bash
-git clone https://github.com/mangowm/waybar-pomodoro.git
+git clone https://github.com/qwerpik/waybar-pomodoro.git
 cd waybar-pomodoro
 ./install.sh
 ```
@@ -82,7 +82,7 @@ sudo apt install -y python3-pipx procps libcanberra-gtk3-module pipewire-audio-c
 pipx ensurepath
 
 # 3. Install waybar-pomodoro
-pipx install git+https://github.com/mangowm/waybar-pomodoro.git
+pipx install git+https://github.com/qwerpik/waybar-pomodoro.git
 
 # Or install from local cloned folder:
 # pipx install .
@@ -92,7 +92,7 @@ pipx install git+https://github.com/mangowm/waybar-pomodoro.git
 Because `waybar-pomodoro` is written using **pure Python standard libraries** (zero pip dependencies), the included `./install.sh` script installs the package directly into `~/.local/lib/waybar-pomodoro/` and creates a standalone wrapper in `~/.local/bin/waybar-pomodoro` without violating PEP 668:
 
 ```bash
-git clone https://github.com/mangowm/waybar-pomodoro.git
+git clone https://github.com/qwerpik/waybar-pomodoro.git
 cd waybar-pomodoro
 ./install.sh
 ```
@@ -119,7 +119,7 @@ sudo dnf install -y python3 pipx procps-ng libcanberra-gtk3 pipewire-utils sound
 
 # 2. Install waybar-pomodoro via pipx
 pipx ensurepath
-pipx install git+https://github.com/mangowm/waybar-pomodoro.git
+pipx install git+https://github.com/qwerpik/waybar-pomodoro.git
 
 # Or via install.sh
 # ./install.sh
@@ -127,6 +127,8 @@ pipx install git+https://github.com/mangowm/waybar-pomodoro.git
 
 ---
 
+<a id="4-nixos--nix"></a>
+<a id="nixos-nix"></a>
 ### 4. NixOS / Nix
 
 `waybar-pomodoro` provides first-class, declarative support for Nix and NixOS via **Nix Flakes** (`flake.nix`), traditional `default.nix`, and an integrated **Home Manager module**.
@@ -136,7 +138,7 @@ The package is wrapped with Nixpkgs' `makeWrapper`, ensuring `procps` (`pkill -x
 #### Option A: Quick Ad-Hoc Run via Flakes
 Run the latest release directly without installing:
 ```bash
-nix run github:mangowm/waybar-pomodoro -- status
+nix run github:qwerpik/waybar-pomodoro -- status
 ```
 
 #### Option B: Home Manager Module (Recommended)
@@ -146,7 +148,7 @@ Add `waybar-pomodoro` to your Flake inputs (`flake.nix`):
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
-    waybar-pomodoro.url = "github:mangowm/waybar-pomodoro";
+    waybar-pomodoro.url = "github:qwerpik/waybar-pomodoro";
   };
 
   outputs = { nixpkgs, home-manager, waybar-pomodoro, ... }: {
@@ -197,6 +199,8 @@ nix-shell -p 'import ./default.nix {}'
 
 ## 🛠️ User Environment & Shell Configuration
 
+<a id="1-verifying-and-adding-localbin-to-path"></a>
+<a id="path-configuration"></a>
 ### 1. Verifying and Adding `~/.local/bin` to `$PATH`
 
 When installing via `./install.sh` or `pipx`, the executable is placed in `~/.local/bin/waybar-pomodoro`. If Waybar fails to execute the module (showing an empty string or error), your shell session or Waybar process likely does not have `~/.local/bin` in its `$PATH`.
@@ -303,3 +307,14 @@ In `~/.config/waybar/style.css`, specify a robust font family fallback:
     font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "Noto Color Emoji", sans-serif;
 }
 ```
+
+---
+
+## 🔗 Related Documentation
+
+* 📖 **[Main README](../README.md)**: Overview, features, and quickstart.
+* 💻 **[CLI & Scripting Guide](CLI.md)**: Complete CLI command matrix, global flags, and window manager keybindings.
+* 🔬 **[Engineering Case Study](ARTICLE.md)**: POSIX advisory locking, atomic durability, and drift protection.
+* 🚀 **[Showcase & Presets](SHOWCASE.md)**: Capsule themes and community showcases.
+* 🎨 **[CSS Capsule Themes](themes/)**: Ready-to-use color schemes.
+

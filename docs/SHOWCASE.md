@@ -44,10 +44,10 @@ Streak: 5 day(s) 🔥
 ```
 
 ### 🔗 Links & Installation
-* **GitHub**: [https://github.com/mangowm/waybar-pomodoro](https://github.com/mangowm/waybar-pomodoro)
+* **GitHub**: [https://github.com/qwerpik/waybar-pomodoro](https://github.com/qwerpik/waybar-pomodoro)
 * **Installation**:
   * **Arch**: `cd packaging && makepkg -si`
-  * **Debian/Ubuntu/Fedora**: `pipx install git+https://github.com/mangowm/waybar-pomodoro.git`
+  * **Debian/Ubuntu/Fedora**: `pipx install git+https://github.com/qwerpik/waybar-pomodoro.git`
   * **Generic**: `./install.sh`
 
 Feedback and contributions are super welcome! Hope this helps keep you in the focus zone. 🍅
@@ -84,6 +84,8 @@ Feedback and contributions are super welcome! Hope this helps keep you in the fo
 ---
 
 ## 🖥️ Window Manager & Compositor Configurations
+
+Add global keybindings to control the timer from anywhere in your workflow. *(For the complete command matrix, flags, and scripting automation recipes, see [`docs/CLI.md`](CLI.md).)*
 
 ### 1. Hyprland Integration (`~/.config/hypr/hyprland.conf`)
 
@@ -204,3 +206,14 @@ mango-bind --key "Super+Alt+p" --exec "waybar-pomodoro skip"
     opacity: 0.85;
 }
 ```
+
+---
+
+## 🔗 Related Documentation
+
+* 📖 **[Main README](../README.md)**: Overview, features, and quickstart.
+* 💻 **[CLI & Scripting Guide](CLI.md)**: Complete CLI command matrix, global flags, and window manager keybindings.
+* 📦 **[Multi-Distribution Installation Guide](INSTALLATION.md)**: Distro packages, PEP 668, `$PATH`, and audio backends.
+* 🔬 **[Engineering Case Study](ARTICLE.md)**: POSIX advisory locking, atomic durability, and drift protection.
+* 🎨 **[CSS Capsule Themes](themes/)**: Ready-to-use color schemes.
+
