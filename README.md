@@ -17,10 +17,11 @@
 </p>
 
 <p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#️-waybar-configuration">Waybar Config</a> •
-  <a href="#-theme-presets">Themes</a> •
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#waybar-configuration">Waybar Config</a> •
+  <a href="#theme-presets">Themes</a> •
+  <a href="docs/CLI.md">CLI Guide</a> •
   <a href="docs/INSTALLATION.md">Distro Guides</a> •
   <a href="docs/ARTICLE.md">Architecture</a>
 </p>
@@ -53,6 +54,7 @@ Designed with zero external dependencies (pure Python 3 standard library), atomi
 ## 📚 Documentation & Deep Dives
 
 * 📖 **[Multi-Distribution Installation Guide](docs/INSTALLATION.md)**: Distro guides (Arch, Debian/Ubuntu PEP 668, Fedora, Nix), `$PATH` configuration, audio backend priorities, and font setup.
+* 💻 **[Command Line Interface (CLI) & Scripting Guide](docs/CLI.md)**: Complete CLI command matrix, global flags, scripting recipes, rofi/dmenu launcher, and window manager keybindings.
 * 🔬 **[Engineering Case Study & Architecture](docs/ARTICLE.md)**: Deep dive into POSIX advisory locking (`fcntl.flock`), atomic durability (`os.fsync`), system suspend drift detection, and Pango progress rendering.
 * 🚀 **[Showcase & Community Pack](docs/SHOWCASE.md)**: Reddit post templates, release notes, and configuration snippets for **Hyprland**, **Sway**, and **MangoWM**.
 * 🎨 **[CSS Capsule Themes](docs/themes/)**: Modern pill badges for Catppuccin Mocha, Dracula, Gruvbox, Nord, Tokyo Night, and Minimal Black.
@@ -270,48 +272,16 @@ pkill -SIGUSR2 waybar
 
 ## 📖 Command Line Interface (CLI)
 
-`waybar-pomodoro` can also be controlled directly from your terminal, scripts, or window manager keybindings:
+`waybar-pomodoro` is fully controllable directly from your terminal, custom scripts, or window manager keybindings:
 
 ```bash
-waybar-pomodoro status           # Output Waybar JSON payload
-waybar-pomodoro status --plain   # Output plain text (e.g. "30:00")
-waybar-pomodoro time-left        # Print remaining duration ("25:00")
-waybar-pomodoro time-left -s     # Print raw remaining seconds (1500)
-waybar-pomodoro toggle           # Start / Pause / Resume
-waybar-pomodoro start            # Start timer
-waybar-pomodoro start 45m        # Start timer with ad-hoc duration (e.g. 45 min)
-waybar-pomodoro pause            # Pause timer
-waybar-pomodoro resume           # Resume timer
-waybar-pomodoro reset            # Reset back to configured work duration
-waybar-pomodoro reset 25m        # Reset back to custom duration
-waybar-pomodoro stop             # Stop timer and return to idle
-waybar-pomodoro skip             # Skip current phase to break or work
-waybar-pomodoro adjust +5m       # Add 5 minutes to current timer
-waybar-pomodoro adjust -1m       # Subtract 1 minute
-waybar-pomodoro stats            # Show daily & overall focus stats summary
-waybar-pomodoro stats --json     # Export stats in JSON format
-waybar-pomodoro stats --csv      # Export daily activity history in CSV format
-waybar-pomodoro stats --reset    # Clear recorded statistics
-waybar-pomodoro test-alert       # Trigger test desktop notification and audio chime
-waybar-pomodoro config --show    # Display active JSON configuration
-waybar-pomodoro config --init    # Generate default configuration file
+waybar-pomodoro toggle      # Start, pause, or resume timer
+waybar-pomodoro reset       # Reset timer back to configured work duration
+waybar-pomodoro adjust +5m  # Fine-tune timer on the fly (+1m, -1m, +5m)
+waybar-pomodoro stats       # Display daily focus statistics and streak summary
 ```
 
-### Window Manager Keybinding Examples
-
-#### Hyprland (`~/.config/hypr/hyprland.conf`)
-```ini
-bind = $mainMod, P, exec, waybar-pomodoro toggle
-bind = $mainMod SHIFT, P, exec, waybar-pomodoro reset
-bind = $mainMod ALT, P, exec, waybar-pomodoro skip
-```
-
-#### Sway / i3 (`~/.config/sway/config` or `~/.config/i3/config`)
-```i3config
-bindsym $mod+p exec waybar-pomodoro toggle
-bindsym $mod+Shift+p exec waybar-pomodoro reset
-bindsym $mod+Mod1+p exec waybar-pomodoro skip
-```
+👉 **For the complete command matrix, global flags, scripting examples, and window manager keybindings (Hyprland, Sway, MangoWM), see [`docs/CLI.md`](docs/CLI.md).**
 
 ---
 
@@ -398,6 +368,12 @@ make typecheck
 # Run all checks
 make check
 ```
+
+---
+
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=qwerpik/waybar-pomodoro&type=Date)](https://star-history.com/#qwerpik/waybar-pomodoro&Date)
 
 ---
 
