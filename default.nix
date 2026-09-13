@@ -8,7 +8,7 @@
 
 python3Packages.buildPythonApplication rec {
   pname = "waybar-pomodoro";
-  version = "1.0.2";
+  version = "1.0.3";
   format = "pyproject";
 
   src = lib.cleanSourceWith {

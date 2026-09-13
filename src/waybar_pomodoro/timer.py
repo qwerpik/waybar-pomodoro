@@ -7,6 +7,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import signal
 import subprocess
 import tempfile
 import time
@@ -111,8 +112,14 @@ class PomodoroTimer:
         return self._sanitize_state(state)
 
     def save_state(self, state: Dict[str, Any]) -> None:
+        self.state_file.parent.mkdir(parents=True, exist_ok=True)
         try:
-            self.state_file.parent.mkdir(parents=True, exist_ok=True)
+            os.chmod(self.state_file.parent, 0o700)
+        except OSError:
+            pass
+
+        temp_path = None
+        try:
             with tempfile.NamedTemporaryFile(
                 mode="w",
                 dir=self.state_file.parent,
@@ -121,22 +128,31 @@ class PomodoroTimer:
                 prefix=f".{self.state_file.name}.",
                 suffix=".tmp",
             ) as tmp:
+                temp_path = Path(tmp.name)
+                os.chmod(tmp.fileno(), 0o600)
                 json.dump(state, tmp, indent=2)
                 tmp.flush()
                 os.fsync(tmp.fileno())
-                temp_path = Path(tmp.name)
 
             temp_path.replace(self.state_file)
         except Exception:
-            pass
+            if temp_path and temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except OSError:
+                    pass
 
     @contextmanager
     def _transaction(self) -> Iterator[Dict[str, Any]]:
         """Advisory file locking transaction context manager for process synchronization."""
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.lock_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(self.state_file.parent, 0o700)
+        except OSError:
+            pass
 
-        with open(self.lock_file, "w") as lock_f:
+        with open(self.lock_file, "a") as lock_f:
             fcntl.flock(lock_f.fileno(), fcntl.LOCK_EX)
             try:
                 state = self.load_state()
@@ -149,8 +165,6 @@ class PomodoroTimer:
         sig = self.config.waybar_signal
         if 0 < sig <= 30:
             try:
-                import signal
-
                 try:
                     # Ignore the RT signal in the current process so it can never signal itself
                     signal.signal(signal.SIGRTMIN + sig, signal.SIG_IGN)
@@ -176,6 +190,12 @@ class PomodoroTimer:
         now = time.time()
         if state["state"] != "running":
             return False
+
+        total_time = state.get("total_time", self.config.work_duration * 60)
+        # Guard against backward system clock jump (e.g. NTP backwards step or DST adjustments)
+        if state["end_time"] - now > total_time + 60:
+            resync_rem = min(total_time, max(0, state.get("time_remaining", total_time)))
+            state["end_time"] = now + resync_rem
 
         remaining = int(round(state["end_time"] - now))
         if remaining > 0:
@@ -261,12 +281,15 @@ class PomodoroTimer:
 
     def get_remaining_and_percentage(self, state: Dict[str, Any]) -> Tuple[int, int]:
         now = time.time()
+        total = state.get("total_time", self.config.work_duration * 60)
         if state["state"] == "running":
-            remaining = max(0, int(round(state["end_time"] - now)))
+            if state["end_time"] - now > total + 60:
+                remaining = min(total, max(0, state.get("time_remaining", total)))
+            else:
+                remaining = max(0, int(round(state["end_time"] - now)))
         else:
             remaining = max(0, state.get("time_remaining", 0))
 
-        total = state.get("total_time", self.config.work_duration * 60)
         percentage = 0
         if total > 0:
             percentage = min(100, max(0, int(((total - remaining) / total) * 100)))
@@ -507,11 +530,10 @@ class PomodoroTimer:
         else:
             header_title = "<b>🌴 Long Break</b> <span alpha='70%'>[Reward]</span>"
 
-        # Focus statistics for tooltip
-        today_stats = self.stats.get_today_stats()
+        # Focus statistics for tooltip (single disk read)
+        today_stats, streak = self.stats.get_today_and_streak()
         today_sessions = today_stats.get("completed_sessions", 0)
         today_mins = today_stats.get("focus_seconds", 0) // 60
-        streak = self.stats.get_streak()
         streak_display = (
             f"<b>{streak}</b> day(s) 🔥" if streak > 0 else "<span alpha='60%'>0 days</span>"
         )

@@ -161,19 +161,33 @@ def save_config(config: PomodoroConfig, config_path: Optional[Path] = None) -> P
     """
     target = config_path or (get_default_config_dir() / "config.json")
     target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(target.parent, 0o700)
+    except OSError:
+        pass
 
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        dir=target.parent,
-        encoding="utf-8",
-        delete=False,
-        prefix=f".{target.name}.",
-        suffix=".tmp",
-    ) as tmp:
-        json.dump(config.to_dict(), tmp, indent=4)
-        tmp.flush()
-        os.fsync(tmp.fileno())
-        temp_path = Path(tmp.name)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            dir=target.parent,
+            encoding="utf-8",
+            delete=False,
+            prefix=f".{target.name}.",
+            suffix=".tmp",
+        ) as tmp:
+            temp_path = Path(tmp.name)
+            os.chmod(tmp.fileno(), 0o600)
+            json.dump(config.to_dict(), tmp, indent=4)
+            tmp.flush()
+            os.fsync(tmp.fileno())
 
-    temp_path.replace(target)
-    return target
+        temp_path.replace(target)
+        return target
+    except Exception:
+        if temp_path and temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+        raise

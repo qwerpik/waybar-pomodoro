@@ -12,7 +12,7 @@ import os
 import tempfile
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 
 class PomodoroStats:
@@ -42,9 +42,13 @@ class PomodoroStats:
 
     def _save(self) -> None:
         self.stats_file.parent.mkdir(parents=True, exist_ok=True)
-        self.lock_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(self.stats_file.parent, 0o700)
+        except OSError:
+            pass
 
-        with open(self.lock_file, "w") as lock_f:
+        temp_path = None
+        with open(self.lock_file, "a") as lock_f:
             fcntl.flock(lock_f.fileno(), fcntl.LOCK_EX)
             try:
                 with tempfile.NamedTemporaryFile(
@@ -55,21 +59,33 @@ class PomodoroStats:
                     prefix=f".{self.stats_file.name}.",
                     suffix=".tmp",
                 ) as tmp:
+                    temp_path = Path(tmp.name)
+                    os.chmod(tmp.fileno(), 0o600)
                     json.dump(self.data, tmp, indent=2)
                     tmp.flush()
                     os.fsync(tmp.fileno())
-                    temp_path = Path(tmp.name)
 
                 temp_path.replace(self.stats_file)
+            except Exception:
+                if temp_path and temp_path.exists():
+                    try:
+                        temp_path.unlink()
+                    except OSError:
+                        pass
+                raise
             finally:
                 fcntl.flock(lock_f.fileno(), fcntl.LOCK_UN)
 
     def record_session(self, duration_seconds: int, session_date: Optional[date] = None) -> None:
         """Records a completed work session with process synchronization."""
         self.stats_file.parent.mkdir(parents=True, exist_ok=True)
-        self.lock_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(self.stats_file.parent, 0o700)
+        except OSError:
+            pass
 
-        with open(self.lock_file, "w") as lock_f:
+        temp_path = None
+        with open(self.lock_file, "a") as lock_f:
             fcntl.flock(lock_f.fileno(), fcntl.LOCK_EX)
             try:
                 # Reload fresh state under lock to prevent lost updates
@@ -91,31 +107,36 @@ class PomodoroStats:
                     prefix=f".{self.stats_file.name}.",
                     suffix=".tmp",
                 ) as tmp:
+                    temp_path = Path(tmp.name)
+                    os.chmod(tmp.fileno(), 0o600)
                     json.dump(self.data, tmp, indent=2)
                     tmp.flush()
                     os.fsync(tmp.fileno())
-                    temp_path = Path(tmp.name)
 
                 temp_path.replace(self.stats_file)
+            except Exception:
+                if temp_path and temp_path.exists():
+                    try:
+                        temp_path.unlink()
+                    except OSError:
+                        pass
+                raise
             finally:
                 fcntl.flock(lock_f.fileno(), fcntl.LOCK_UN)
 
-    def get_today_stats(self) -> Dict[str, int]:
-        # Always reload from file to ensure freshest data
-        self.data = self._load()
+    def get_today_stats(self, data: Optional[Dict[str, Any]] = None) -> Dict[str, int]:
+        d = data if data is not None else self._load()
         today_str = date.today().isoformat()
-        res = self.data.get("days", {}).get(
-            today_str, {"completed_sessions": 0, "focus_seconds": 0}
-        )
+        res = d.get("days", {}).get(today_str, {"completed_sessions": 0, "focus_seconds": 0})
         return {
             "completed_sessions": int(res.get("completed_sessions", 0)),
             "focus_seconds": int(res.get("focus_seconds", 0)),
         }
 
-    def get_streak(self) -> int:
+    def get_streak(self, data: Optional[Dict[str, Any]] = None) -> int:
         """Calculates current streak of consecutive active days."""
-        self.data = self._load()
-        days_dict = self.data.get("days", {})
+        d = data if data is not None else self._load()
+        days_dict = d.get("days", {})
         if not days_dict:
             return 0
 
@@ -144,6 +165,11 @@ class PomodoroStats:
             current -= timedelta(days=1)
 
         return streak
+
+    def get_today_and_streak(self) -> Tuple[Dict[str, int], int]:
+        """Loads stats once from disk and returns both today's stats and streak."""
+        d = self._load()
+        return self.get_today_stats(data=d), self.get_streak(data=d)
 
     def format_summary(self) -> str:
         self.data = self._load()

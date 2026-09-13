@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "waybar-pomodoro"
-version = "1.0.2"
+version = "1.0.3"
 description = "A lightweight, customizable Pomodoro timer module for Waybar"
 readme = "README.md"
 authors = [{ name = "qwerpik", email = "qwerpik@users.noreply.github.com" }]

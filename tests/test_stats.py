@@ -114,7 +114,28 @@ class TestStats(unittest.TestCase):
             stats.reset()
             self.assertEqual(stats.data["total_completed"], 0)
             self.assertEqual(stats.data["total_focus_seconds"], 0)
-            self.assertEqual(stats.get_streak(), 0)
+
+    def test_get_today_and_streak(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            stats_file = Path(tmpdir) / "stats.json"
+            stats = PomodoroStats(stats_file)
+            stats.record_session(1800)
+
+            today_stats, streak = stats.get_today_and_streak()
+            self.assertEqual(today_stats["completed_sessions"], 1)
+            self.assertEqual(today_stats["focus_seconds"], 1800)
+            self.assertEqual(streak, 1)
+
+    def test_stats_file_permissions(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            stats_file = Path(tmpdir) / "sub" / "stats.json"
+            stats = PomodoroStats(stats_file)
+            stats.record_session(1800)
+
+            mode = stats_file.stat().st_mode & 0o777
+            self.assertEqual(mode, 0o600)
+            dir_mode = stats_file.parent.stat().st_mode & 0o777
+            self.assertEqual(dir_mode, 0o700)
 
 
 if __name__ == "__main__":

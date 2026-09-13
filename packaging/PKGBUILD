@@ -1,6 +1,6 @@
 # Maintainer: qwerpik <qwerpik@users.noreply.github.com>
 pkgname=waybar-pomodoro-git
-pkgver=1.0.2
+pkgver=1.0.3
 pkgrel=1
 pkgdesc="A lightweight, customizable Pomodoro timer module for Waybar"
 arch=('any')

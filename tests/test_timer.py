@@ -265,7 +265,31 @@ class TestTimer(unittest.TestCase):
         self.assertIn("[1/4]", tooltip)
         self.assertIn("Today:", tooltip)
         self.assertIn("Streak:", tooltip)
-        self.assertIn("Toggle / Pause", tooltip)
+
+    def test_clock_backward_jump_resync(self):
+        # Simulate timer running, then clock jumping backward by 1 hour
+        self.timer.start()
+        state = self.timer.load_state()
+        now = time.time()
+        # Artificial backward jump: end_time is in the future by 3600 seconds beyond total_time
+        state["end_time"] = now + 4000
+        state["total_time"] = 25 * 60
+        state["time_remaining"] = 20 * 60
+
+        # Verify get_remaining_and_percentage clamps the jump
+        rem, pct = self.timer.get_remaining_and_percentage(state)
+        self.assertLessEqual(rem, 25 * 60)
+
+        # Verify check_completion re-anchors end_time
+        self.timer.check_completion(state)
+        self.assertLessEqual(state["end_time"], now + 25 * 60 + 1)
+
+    def test_timer_file_permissions(self):
+        self.timer.start()
+        mode = self.state_file.stat().st_mode & 0o777
+        self.assertEqual(mode, 0o600)
+        dir_mode = self.state_file.parent.stat().st_mode & 0o777
+        self.assertEqual(dir_mode, 0o700)
 
 
 if __name__ == "__main__":
