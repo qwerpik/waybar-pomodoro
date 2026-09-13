@@ -133,9 +133,17 @@ class PomodoroTimer:
         sig = self.config.waybar_signal
         if 0 < sig <= 30:
             try:
-                # Target only the current user's waybar processes
+                import signal
+
+                try:
+                    # Ignore the RT signal in the current process so it can never signal itself
+                    signal.signal(signal.SIGRTMIN + sig, signal.SIG_IGN)
+                except Exception:
+                    pass
+
+                # Target only exact waybar process owned by the current user
                 subprocess.run(
-                    ["pkill", "-u", str(os.getuid()), f"-RTMIN+{sig}", "waybar"],
+                    ["pkill", "-x", "-u", str(os.getuid()), f"-RTMIN+{sig}", "waybar"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     check=False,

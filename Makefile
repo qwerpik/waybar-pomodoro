@@ -7,11 +7,22 @@ test:
 	PYTHONPATH=src $(PYTHON) -m unittest discover -s tests -v
 
 lint:
-	ruff check .
-	ruff format --check .
+	@if command -v ruff >/dev/null 2>&1; then \
+		ruff check . && ruff format --check .; \
+	elif command -v uv >/dev/null 2>&1; then \
+		uv run --with ruff ruff check . && uv run --with ruff ruff format --check .; \
+	else \
+		echo "ruff not found, install ruff or uv"; exit 1; \
+	fi
 
 typecheck:
-	mypy src
+	@if command -v mypy >/dev/null 2>&1; then \
+		mypy src; \
+	elif command -v uv >/dev/null 2>&1; then \
+		uv run --with mypy mypy src; \
+	else \
+		echo "mypy not found, install mypy or uv"; exit 1; \
+	fi
 
 check: lint typecheck test
 
