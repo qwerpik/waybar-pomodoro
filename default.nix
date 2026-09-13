@@ -47,7 +47,7 @@ python3Packages.buildPythonApplication rec {
 
   meta = with lib; {
     description = "A lightweight, race-free Pomodoro timer module for Waybar";
-    homepage = "https://github.com/mangowm/waybar-pomodoro";
+    homepage = "https://github.com/qwerpik/waybar-pomodoro";
     license = licenses.mit;
     platforms = platforms.linux;
     mainProgram = "waybar-pomodoro";

@@ -1,11 +1,31 @@
-# 🍅 waybar-pomodoro
+<p align="center">
+  <img src="assets/banner.png" alt="waybar-pomodoro banner" width="100%" />
+</p>
 
-[![CI Test Suite](https://github.com/qwerpik/waybar-pomodoro/actions/workflows/test.yml/badge.svg)](https://github.com/qwerpik/waybar-pomodoro/actions/workflows/test.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+<h1 align="center">🍅 waybar-pomodoro</h1>
 
-A lightweight, distraction-free, concurrency-hardened, and highly customizable Pomodoro timer module built specifically for [Waybar](https://github.com/Alexays/Waybar).
+<p align="center">
+  <strong>A distraction-free, zero-dependency & concurrency-hardened Pomodoro timer module for Waybar.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/qwerpik/waybar-pomodoro/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/qwerpik/waybar-pomodoro/test.yml?branch=main&label=CI&style=flat-square&logo=githubactions&logoColor=white&color=a6e3a1" alt="CI Status" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-f38ba8?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License: MIT" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.9+-89b4fa?style=flat-square&logo=python&logoColor=white" alt="Python 3.9+" /></a>
+  <a href="https://wayland.freedesktop.org/"><img src="https://img.shields.io/badge/Wayland-Native-fab387?style=flat-square&logo=wayland&logoColor=white" alt="Wayland Native" /></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/Code%20Style-Ruff-cba6f7?style=flat-square&logo=ruff&logoColor=white" alt="Code style: ruff" /></a>
+</p>
+
+<p align="center">
+  <a href="#-features">Features</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#️-waybar-configuration">Waybar Config</a> •
+  <a href="#-theme-presets">Themes</a> •
+  <a href="docs/INSTALLATION.md">Distro Guides</a> •
+  <a href="docs/ARTICLE.md">Architecture</a>
+</p>
+
+<br/>
 
 Designed with zero external dependencies (pure Python 3 standard library), atomic advisory file locking, instant reactive signal updates (`SIGRTMIN+8`), mouse wheel duration adjustments, customizable sound/desktop notifications, rich Pango tooltips, and daily focus statistics.
 
@@ -48,8 +68,8 @@ For comprehensive distribution-specific guides, PEP 668 mitigation, `$PATH` setu
 | Distribution | Recommended Method | Command |
 | :--- | :--- | :--- |
 | **Arch Linux / Artix** | Local PKGBUILD | `cd packaging && makepkg -si` |
-| **Debian / Ubuntu / Mint** | `pipx` (PEP 668 safe) | `pipx install git+https://github.com/mangowm/waybar-pomodoro.git` |
-| **Fedora** | `pipx` or `./install.sh` | `pipx install git+https://github.com/mangowm/waybar-pomodoro.git` |
+| **Debian / Ubuntu / Mint** | `pipx` (PEP 668 safe) | `pipx install git+https://github.com/qwerpik/waybar-pomodoro.git` |
+| **Fedora** | `pipx` or `./install.sh` | `pipx install git+https://github.com/qwerpik/waybar-pomodoro.git` |
 | **NixOS / Nix** | Nix Flake / `nix-shell` | See [`docs/INSTALLATION.md`](docs/INSTALLATION.md#4-nixos--nix) |
 | **Any Linux (User)** | Standalone Installer | `./install.sh` |
 
@@ -60,7 +80,7 @@ For comprehensive distribution-specific guides, PEP 668 mitigation, `$PATH` setu
 Clone the repository and run the install script:
 
 ```bash
-git clone https://github.com/mangowm/waybar-pomodoro.git
+git clone https://github.com/qwerpik/waybar-pomodoro.git
 cd waybar-pomodoro
 ./install.sh
 ```
@@ -74,7 +94,7 @@ This installs the binary to `~/.local/bin/waybar-pomodoro` and creates a default
 Install isolated from GitHub without cloning:
 
 ```bash
-pipx install git+https://github.com/mangowm/waybar-pomodoro.git
+pipx install git+https://github.com/qwerpik/waybar-pomodoro.git
 ```
 
 Or from a local clone:
@@ -94,7 +114,7 @@ makepkg -si
 
 Run directly via Nix Flake:
 ```bash
-nix run github:mangowm/waybar-pomodoro -- status
+nix run github:qwerpik/waybar-pomodoro -- status
 ```
 
 Or declare via Home Manager module (`waybar-pomodoro.homeManagerModules.default`):
@@ -227,7 +247,18 @@ Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a
 }
 ```
 
-*All modern capsule pill badge themes (Catppuccin Mocha, Dracula, Gruvbox, Nord, Tokyo Night, Minimal Black) are available in the [`docs/themes/`](docs/themes/) folder.*
+### 🎨 Theme Presets
+
+Ready-to-use capsule pill stylesheets located in [`docs/themes/`](docs/themes/):
+
+| Theme | Work / Break Accents | Vibe | File Link |
+| :--- | :--- | :--- | :--- |
+| **Catppuccin Mocha** | `#f38ba8` (Red) / `#a6e3a1` (Green) | Pastel cozy dark | [`catppuccin-mocha.css`](docs/themes/catppuccin-mocha.css) |
+| **Tokyo Night** | `#f7768e` (Red) / `#9ece6a` (Green) | Cyber nocturnal neon | [`tokyo-night.css`](docs/themes/tokyo-night.css) |
+| **Nord** | `#bf616a` (Aurora) / `#a3be8c` (Green) | Arctic frost muted | [`nord.css`](docs/themes/nord.css) |
+| **Gruvbox Dark** | `#ea6962` (Red) / `#b8bb26` (Green) | Warm retro earth | [`gruvbox.css`](docs/themes/gruvbox.css) |
+| **Dracula** | `#ff5555` (Red) / `#50fa7b` (Green) | High contrast gothic | [`dracula.css`](docs/themes/dracula.css) |
+| **Minimal Black** | `#ffffff` / `#777777` | Pure stealth monochrome | [`minimal-black.css`](docs/themes/minimal-black.css) |
 
 ### 4. Reload Waybar
 
