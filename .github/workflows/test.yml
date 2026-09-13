@@ -5,30 +5,66 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Lint & Typecheck Dependencies
+        run: |
+          pip install ruff mypy
+
+      - name: Lint with Ruff
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Type check with Mypy
+        run: |
+          mypy src
+
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Run unit tests
-      run: |
-        PYTHONPATH=src python3 -m unittest discover -s tests -v
+      - name: Run unit tests
+        run: |
+          PYTHONPATH=src python3 -m unittest discover -s tests -v
 
-    - name: Test CLI execution
-      run: |
-        ./bin/waybar-pomodoro --help
-        ./bin/waybar-pomodoro status --plain
-        ./bin/waybar-pomodoro adjust +1m
-        ./bin/waybar-pomodoro reset
-        ./bin/waybar-pomodoro stats
+      - name: Test package build and wheel installation
+        run: |
+          pip install build twine
+          python -m build
+          twine check --strict dist/*
+          pip install .
+
+      - name: Test installed CLI entrypoint
+        run: |
+          waybar-pomodoro --help
+          waybar-pomodoro status --plain
+          waybar-pomodoro time-left
+          waybar-pomodoro adjust +1m
+          waybar-pomodoro reset
+          waybar-pomodoro stats --json

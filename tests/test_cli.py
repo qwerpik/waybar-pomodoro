@@ -16,6 +16,8 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(parse_duration_delta("-45sec"), -45)
         self.assertEqual(parse_duration_delta("5"), 300)  # default minutes
         self.assertEqual(parse_duration_delta("-10"), -600)
+        self.assertEqual(parse_duration_delta("25m"), 1500)
+        self.assertEqual(parse_duration_delta("120s"), 120)
 
     def test_cli_execution_lifecycle(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -52,9 +54,23 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(ret, 0)
             data = json.loads(f.getvalue().strip())
             self.assertEqual(data["text"], "20:00")
+            self.assertEqual(data["alt"], "idle")
             self.assertIn("class", data)
 
-            # 3. adjust +2m
+            # 3. time-left
+            f = io.StringIO()
+            with redirect_stdout(f):
+                ret = main(base_args + ["time-left"])
+            self.assertEqual(ret, 0)
+            self.assertEqual(f.getvalue().strip(), "20:00")
+
+            f = io.StringIO()
+            with redirect_stdout(f):
+                ret = main(base_args + ["time-left", "--seconds"])
+            self.assertEqual(ret, 0)
+            self.assertEqual(f.getvalue().strip(), "1200")
+
+            # 4. adjust +2m
             ret = main(base_args + ["adjust", "+2m"])
             self.assertEqual(ret, 0)
 
@@ -63,7 +79,7 @@ class TestCLI(unittest.TestCase):
                 main(base_args + ["status", "--plain"])
             self.assertEqual(f.getvalue().strip(), "22:00")
 
-            # 4. reset
+            # 5. reset
             ret = main(base_args + ["reset"])
             self.assertEqual(ret, 0)
 
@@ -72,14 +88,58 @@ class TestCLI(unittest.TestCase):
                 main(base_args + ["status", "--plain"])
             self.assertEqual(f.getvalue().strip(), "20:00")
 
-            # 5. stats
+            # 6. start with custom duration
+            ret = main(base_args + ["start", "35m"])
+            self.assertEqual(ret, 0)
+
+            f = io.StringIO()
+            with redirect_stdout(f):
+                main(base_args + ["status", "--plain"])
+            self.assertEqual(f.getvalue().strip(), "35:00")
+
+            # 7. stop command
+            ret = main(base_args + ["stop"])
+            self.assertEqual(ret, 0)
+
+            f = io.StringIO()
+            with redirect_stdout(f):
+                main(base_args + ["status", "--plain"])
+            self.assertEqual(f.getvalue().strip(), "20:00")
+
+            # 8. stats, stats --json, stats --csv, stats --reset
             f = io.StringIO()
             with redirect_stdout(f):
                 ret = main(base_args + ["stats"])
             self.assertEqual(ret, 0)
             self.assertIn("Pomodoro Statistics", f.getvalue())
 
-            # 6. config --show
+            f = io.StringIO()
+            with redirect_stdout(f):
+                ret = main(base_args + ["stats", "--json"])
+            self.assertEqual(ret, 0)
+            stats_json = json.loads(f.getvalue().strip())
+            self.assertIn("total_completed", stats_json)
+
+            f = io.StringIO()
+            with redirect_stdout(f):
+                ret = main(base_args + ["stats", "--csv"])
+            self.assertEqual(ret, 0)
+            self.assertIn("date,completed_sessions", f.getvalue())
+
+            f = io.StringIO()
+            with redirect_stdout(f):
+                ret = main(base_args + ["stats", "--reset"])
+            self.assertEqual(ret, 0)
+            self.assertIn("reset successfully", f.getvalue())
+
+            # 9. test-alert
+            f = io.StringIO()
+            with redirect_stdout(f):
+                ret = main(base_args + ["test-alert"])
+            self.assertEqual(ret, 0)
+            self.assertIn("Test alert sent", f.getvalue())
+
+            # 10. config --show
             f = io.StringIO()
             with redirect_stdout(f):
                 ret = main(base_args + ["config", "--show"])

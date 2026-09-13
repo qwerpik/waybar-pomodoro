@@ -1,7 +1,7 @@
 /* Gruvbox Theme for waybar-pomodoro */
 #custom-pomodoro {
-    background: linear-gradient(to top, #ea6962, #fbf1c7);
-    color: #1d2021;
+    background-color: #3c3836;
+    color: #ebdbb2;
     padding: 0px 14px;
     border-radius: 100px;
     margin: 0px 4px;
@@ -19,12 +19,17 @@
     color: #1d2021;
 }
 
-#custom-pomodoro.paused {
-    background-color: #e3ac2b;
+#custom-pomodoro.break {
+    background-color: #b8bb26;
     color: #1d2021;
 }
 
-#custom-pomodoro.break {
-    background-color: #b8bb26;
+#custom-pomodoro.long-break {
+    background-color: #8ec07c;
+    color: #1d2021;
+}
+
+#custom-pomodoro.paused {
+    background-color: #e3ac2b;
     color: #1d2021;
 }

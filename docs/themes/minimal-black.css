@@ -18,12 +18,17 @@
     color: #ebdbb2;
 }
 
-#custom-pomodoro.paused {
-    background-color: #1b1a1a;
-    color: #928374;
-}
-
 #custom-pomodoro.break {
     background-color: #1b1a1a;
     color: #b8bb26;
+}
+
+#custom-pomodoro.long-break {
+    background-color: #1b1a1a;
+    color: #8ec07c;
+}
+
+#custom-pomodoro.paused {
+    background-color: #1b1a1a;
+    color: #928374;
 }

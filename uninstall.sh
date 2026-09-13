@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 PREFIX="${PREFIX:-$HOME/.local}"
 BIN_DIR="$PREFIX/bin"
@@ -8,7 +8,16 @@ LIB_DIR="$PREFIX/lib/waybar-pomodoro"
 echo "Uninstalling waybar-pomodoro from $PREFIX..."
 
 rm -f "$BIN_DIR/waybar-pomodoro"
-rm -rf "$LIB_DIR"
+
+if [ -n "$LIB_DIR" ] && [ -d "$LIB_DIR" ]; then
+    rm -rf "$LIB_DIR"
+fi
+
+if [ "${1:-}" = "--purge" ]; then
+    echo "Purging configuration, cache, and statistics..."
+    rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/waybar-pomodoro"
+    rm -rf "${XDG_DATA_HOME:-$HOME/.local/share}/waybar-pomodoro"
+    rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/waybar-pomodoro"
+fi
 
 echo "waybar-pomodoro binary and libraries removed."
-echo "Note: Configuration at ~/.config/waybar-pomodoro and statistics at ~/.local/share/waybar-pomodoro were kept."

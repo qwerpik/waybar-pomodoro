@@ -7,20 +7,40 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+src/*.egg-info/
 .eggs/
 
 # Virtual environments
 .venv/
 venv/
 ENV/
+env/
 
-# Temporary / test files
+# Static analysis and test caches
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 *.tmp
 *.log
+*.lock
 
 # User local data during local tests
 state.json
 stats.json
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Environment and version managers
+.env
+.python-version

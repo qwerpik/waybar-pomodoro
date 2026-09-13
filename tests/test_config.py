@@ -1,11 +1,10 @@
 import argparse
-import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from waybar_pomodoro.config import PomodoroConfig, load_config, save_config
 from waybar_pomodoro.cli import apply_overrides
+from waybar_pomodoro.config import PomodoroConfig, load_config, save_config
 
 
 class TestConfig(unittest.TestCase):
@@ -18,6 +17,8 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg.style, "minimal")
         self.assertTrue(cfg.sound_enabled)
         self.assertTrue(cfg.notification_enabled)
+        self.assertEqual(cfg.notification_timeout, 10000)
+        self.assertEqual(cfg.notification_category, "timer")
 
     def test_to_dict_and_from_dict(self):
         cfg = PomodoroConfig(work_duration=45, style="icon")
@@ -30,6 +31,19 @@ class TestConfig(unittest.TestCase):
         restored = PomodoroConfig.from_dict(data)
         self.assertEqual(restored.work_duration, 45)
         self.assertEqual(restored.style, "icon")
+
+    def test_validation_bounds(self):
+        data = {
+            "work_duration": -10,
+            "short_break_duration": 0,
+            "cycles_before_long_break": 0,
+            "waybar_signal": 99,
+        }
+        cfg = PomodoroConfig.from_dict(data)
+        self.assertEqual(cfg.work_duration, 1)
+        self.assertEqual(cfg.short_break_duration, 1)
+        self.assertEqual(cfg.cycles_before_long_break, 1)
+        self.assertEqual(cfg.waybar_signal, 30)
 
     def test_save_and_load_config(self):
         with tempfile.TemporaryDirectory() as tmpdir:

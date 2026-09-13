@@ -6,21 +6,25 @@ pkgdesc="A lightweight, customizable Pomodoro timer module for Waybar"
 arch=('any')
 url="https://github.com/qwerpik/waybar-pomodoro"
 license=('MIT')
-depends=('python>=3.8' 'libnotify')
+depends=('python' 'libnotify' 'procps-ng')
 optdepends=(
-    'libcanberra: For notification sound effects'
+    'sound-theme-freedesktop: Default notification sounds'
+    'libcanberra: Sound playback via canberra-gtk-play'
     'pulseaudio-utils: Alternative sound playback via paplay'
     'pipewire-audio: Alternative sound playback via pw-play'
+    'alsa-utils: Alternative sound playback via aplay'
+    'mpv: Alternative sound playback via mpv'
 )
 makedepends=('git' 'python-build' 'python-installer' 'python-setuptools' 'python-wheel')
-provides=('waybar-pomodoro')
+provides=("waybar-pomodoro=${pkgver}")
 conflicts=('waybar-pomodoro')
 source=("git+https://github.com/qwerpik/waybar-pomodoro.git")
 sha256sums=('SKIP')
 
 pkgver() {
     cd "waybar-pomodoro"
-    git describe --long --tags --abbrev=7 2>/dev/null | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' || echo "1.0.0"
+    git describe --long --tags --abbrev=7 2>/dev/null | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' || \
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
 }
 
 build() {
@@ -28,9 +32,20 @@ build() {
     python -m build --wheel --no-isolation
 }
 
+check() {
+    cd "waybar-pomodoro"
+    python -m unittest discover -s tests -v
+}
+
 package() {
     cd "waybar-pomodoro"
     python -m installer --destdir="$pkgdir" dist/*.whl
     install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
     install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+    # Package included themes
+    if [ -d docs/themes ]; then
+        install -d "$pkgdir/usr/share/doc/$pkgname/themes"
+        install -m644 docs/themes/*.css "$pkgdir/usr/share/doc/$pkgname/themes/"
+    fi
 }
