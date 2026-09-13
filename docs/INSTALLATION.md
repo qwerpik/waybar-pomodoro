@@ -129,43 +129,68 @@ pipx install git+https://github.com/mangowm/waybar-pomodoro.git
 
 ### 4. NixOS / Nix
 
-On NixOS or systems using the Nix package manager, you can run or integrate `waybar-pomodoro` deterministically.
+`waybar-pomodoro` provides first-class, declarative support for Nix and NixOS via **Nix Flakes** (`flake.nix`), traditional `default.nix`, and an integrated **Home Manager module**.
 
-#### Ad-hoc Shell (`nix-shell`)
-Create a `shell.nix`:
+The package is wrapped with Nixpkgs' `makeWrapper`, ensuring `procps` (`pkill -x -u`) and `libcanberra-gtk3` (`canberra-gtk-play`) are automatically available in the binary's private `$PATH` without polluting your global environment.
+
+#### Option A: Quick Ad-Hoc Run via Flakes
+Run the latest release directly without installing:
+```bash
+nix run github:mangowm/waybar-pomodoro -- status
+```
+
+#### Option B: Home Manager Module (Recommended)
+Add `waybar-pomodoro` to your Flake inputs (`flake.nix`):
 ```nix
-{ pkgs ? import <nixpkgs> {} }:
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    home-manager.url = "github:nix-community/home-manager";
+    waybar-pomodoro.url = "github:mangowm/waybar-pomodoro";
+  };
 
-pkgs.mkShell {
-  buildInputs = with pkgs; [
-    python3
-    procps
-    libcanberra-gtk3
-    pipewire
-    libnotify
-    waybar
-  ];
+  outputs = { nixpkgs, home-manager, waybar-pomodoro, ... }: {
+    # In your home-manager configuration:
+    homeConfigurations."user" = home-manager.lib.homeManagerConfiguration {
+      # ...
+      modules = [
+        waybar-pomodoro.homeManagerModules.default
+        {
+          programs.waybar-pomodoro = {
+            enable = true;
+            settings = {
+              work_duration = 25;
+              short_break_duration = 5;
+              long_break_duration = 15;
+              cycles_before_long_break = 4;
+              sound_enabled = true;
+              notification_enabled = true;
+            };
+          };
+        }
+      ];
+    };
+  };
 }
 ```
 
-#### Home Manager Integration
-In your `home.nix`:
+#### Option C: NixOS System Configuration (`configuration.nix`)
+To make the binary available system-wide:
 ```nix
-home.packages = with pkgs; [
-  (python3Packages.buildPythonApplication {
-    pname = "waybar-pomodoro";
-    version = "1.0.1";
-    src = pkgs.fetchFromGitHub {
-      owner = "mangowm";
-      repo = "waybar-pomodoro";
-      rev = "v1.0.1";
-      sha256 = "sha256-...";
-    };
-    doCheck = true;
-  })
-  libcanberra-gtk3
-  sound-theme-freedesktop
+# In your NixOS flake.nix:
+environment.systemPackages = [
+  waybar-pomodoro.packages.''${pkgs.system}.default
 ];
+```
+
+#### Option D: Traditional `nix-build` / `nix-shell`
+Without Flakes, you can build or test using `default.nix`:
+```bash
+# Build binary
+nix-build
+
+# Enter interactive development shell
+nix-shell -p 'import ./default.nix {}'
 ```
 
 ---

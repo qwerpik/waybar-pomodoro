@@ -90,6 +90,19 @@ cd packaging
 makepkg -si
 ```
 
+### Option 4: Nix / NixOS (Flakes & Home Manager)
+
+Run directly via Nix Flake:
+```bash
+nix run github:mangowm/waybar-pomodoro -- status
+```
+
+Or declare via Home Manager module (`waybar-pomodoro.homeManagerModules.default`):
+```nix
+programs.waybar-pomodoro.enable = true;
+```
+*(See [`docs/INSTALLATION.md`](docs/INSTALLATION.md#4-nixos--nix) for full declarative configuration)*
+
 ---
 
 ## ⚙️ Waybar Configuration
