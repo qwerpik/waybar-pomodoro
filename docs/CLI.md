@@ -13,17 +13,17 @@
    - [Plain Text Output](#2-plain-text-output)
    - [Ad-Hoc Timers](#3-ad-hoc-timers)
    - [Scroll Wheel Adjustments](#4-scroll-wheel-adjustments)
-   - [Statistics and Data Export](#5-statistics-and-data-export)
-   - [Configuration Management](#6-configuration-management)
-   - [Testing Alerts](#7-testing-alerts)
+   - [Statistics and Study Tracker](#5-statistics-and-study-tracker)
+   - [Interactive Popup Menu](#6-interactive-popup-menu)
+   - [Configuration Management](#7-configuration-management)
+   - [Testing Alerts](#8-testing-alerts)
 4. [Window Manager Keybinding Configurations](#window-manager-keybinding-configurations)
    - [Hyprland](#1-hyprland)
    - [Sway and i3](#2-sway-and-i3)
    - [MangoWM](#3-mangowm)
 5. [Scripting Tips and Automation](#scripting-tips-and-automation)
    - [Custom Status Bars](#1-custom-status-bars)
-   - [Interactive Launcher Menu](#2-interactive-launcher-menu)
-   - [Desktop Notification Hooks](#3-desktop-notification-hooks)
+   - [Desktop Notification Hooks](#2-desktop-notification-hooks)
 6. [Related Documentation](#related-documentation)
 
 ---
@@ -67,7 +67,8 @@ Below is the complete matrix of all subcommands supported by `waybar-pomodoro`:
 | `stop` | — | Stop timer and reset back to idle state | `waybar-pomodoro stop` |
 | `skip` | — | Skip current phase (Work ↔ Break) | `waybar-pomodoro skip` |
 | `adjust` | `<delta>` | Adjust timer duration on the fly (`+1m`, `-1m`, `+30s`, `+5`) | `waybar-pomodoro adjust +5m` |
-| `stats` | `[--json \| --csv \| --reset]` | View focus statistics summary, export data, or clear history | `waybar-pomodoro stats --json` |
+| `menu` | `[-b BACKEND] [-C CMD]` | Open interactive popup menu (Rofi, Wofi, Fuzzel, Tofi, Zenity, GTK) | `waybar-pomodoro menu` |
+| `stats` | `[--heatmap \| --chart \| --json \| --csv \| --reset]` | View stats summary, terminal contribution heatmap, or SVG chart | `waybar-pomodoro stats --heatmap` |
 | `test-alert` | — | Test desktop notification and audio chime playback | `waybar-pomodoro test-alert` |
 | `config` | `[--show \| --init]` | Display active configuration or create default config file | `waybar-pomodoro config --show` |
 
@@ -199,6 +200,53 @@ Overall:
 ────────────────────────────────────
 ```
 
+#### Terminal Study Tracker (GitHub Contribution Heatmap)
+Render a rich 7-row GitHub-style contribution heatmap right inside your terminal:
+```bash
+# Auto-detect terminal width and display color-graded activity grid
+waybar-pomodoro stats --heatmap
+
+# Display specific number of weeks (e.g. 52 weeks or 26 weeks)
+waybar-pomodoro stats --heatmap --weeks 52
+
+# Monochrome / ASCII mode (plain unicode blocks without ANSI colors)
+waybar-pomodoro stats --heatmap --no-color
+```
+
+Example terminal render:
+```text
+🍅 POMODORO STUDY TRACKER (30 Weeks)
+───────────────────────────────────────────────────────────────
+      Mar       Apr     May     Jun       Jul     Aug       Sep
+Mon · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+    · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+Wed · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+    · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+Fri · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+    · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+Sun · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+
+    Less · ■ ■ ■ ■ More
+───────────────────────────────────────────────────────────────
+  • Total Focus: 42.5h (85 sessions)
+  • Current Streak: 6 day(s) 🔥
+  • Best Streak: 14 day(s) 🏆
+  • Active Days: 28 days
+```
+
+#### Vector Contribution Chart (SVG Export & Browser View)
+Generate a pixel-perfect standalone SVG graphic matching GitHub's contribution chart:
+```bash
+# Generate and immediately open the chart in your default image viewer or browser
+waybar-pomodoro stats --chart
+
+# Export chart with custom theme (github-dark, catppuccin, gruvbox, tokyo-night, nord)
+waybar-pomodoro stats --chart --theme catppuccin
+
+# Export SVG to a specific file destination
+waybar-pomodoro stats --export-chart ~/Pictures/pomodoro-tracker.svg --theme gruvbox
+```
+
 #### JSON Export
 Export data for custom dashboards or reporting scripts:
 ```bash
@@ -218,9 +266,38 @@ waybar-pomodoro stats --reset
 
 ---
 
+<a id="interactive-popup-menu"></a>
+<a id="6-interactive-popup-menu"></a>
+### 6. Interactive Popup Menu
+
+`waybar-pomodoro menu` launches an interactive graphical menu on Wayland/X11 to control timer sessions, select quick duration presets, make adjustments, and inspect study progress.
+
+```bash
+# Launch menu with automatic backend detection (rofi -> wofi -> fuzzel -> tofi -> zenity -> gtk)
+waybar-pomodoro menu
+
+# Force a specific launcher backend
+waybar-pomodoro menu --backend rofi
+waybar-pomodoro menu --backend wofi
+waybar-pomodoro menu --backend zenity
+
+# Use a custom launcher command with specific themes
+waybar-pomodoro menu -C "rofi -dmenu -theme ~/.config/rofi/pomodoro.rasi -i -p '🍅 Focus'"
+```
+
+**Popup Menu Actions:**
+- **Dynamic Header**: Displays active phase (`WORK`, `SHORT BREAK`, `LONG BREAK`), remaining countdown `MM:SS`, current cycle `[X/4]`, and streak `🔥`.
+- **Playback**: Instant Toggle, Pause, Resume, Skip Phase, Reset, or Stop & Idle.
+- **Quick Presets**: `⚡ 15m Sprint`, `🍅 25m Classic`, `🎯 45m Deep Work`, `🏆 60m Marathon`.
+- **On-the-Fly Adjustments**: Add `+5m` or Subtract `-5m`.
+- **Custom Duration Input**: Type any ad-hoc time string (e.g. `35m`, `1500s`).
+- **Study Tracker**: Direct access to view your historical heatmap and launch the SVG contribution chart.
+
+---
+
 <a id="configuration-management"></a>
-<a id="6-configuration-management"></a>
-### 6. Configuration Management
+<a id="7-configuration-management"></a>
+### 7. Configuration Management
 
 ```bash
 # View active resolved configuration including defaults
@@ -233,8 +310,8 @@ waybar-pomodoro config --init
 ---
 
 <a id="testing-alerts"></a>
-<a id="7-testing-alerts"></a>
-### 7. Testing Alerts
+<a id="8-testing-alerts"></a>
+### 8. Testing Alerts
 
 Verify that desktop notifications (`notify-send`) and audio players (`canberra-gtk-play`, `pw-play`, `paplay`, `ogg123`, etc.) are functioning properly:
 

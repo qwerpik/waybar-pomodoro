@@ -150,7 +150,7 @@ mango-bind --key "Super+Shift+minus" --exec "waybar-pomodoro adjust -1m"
     "return-type": "json",
     "exec": "waybar-pomodoro status",
     "on-click": "waybar-pomodoro toggle",
-    "on-click-right": "waybar-pomodoro reset",
+    "on-click-right": "waybar-pomodoro menu",
     "on-click-middle": "waybar-pomodoro skip",
     "on-scroll-up": "waybar-pomodoro adjust +1m",
     "on-scroll-down": "waybar-pomodoro adjust -1m",

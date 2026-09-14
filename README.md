@@ -40,9 +40,11 @@ Designed with zero external dependencies (pure Python 3 standard library), atomi
 - **🎯 Instant Waybar Updates**: Leverages Waybar's realtime signals (`SIGRTMIN+8`) for zero-latency UI updates on click or wheel scroll.
 - **🖱️ Full Mouse & Wheel Interaction**:
   - **Left Click**: Start / Pause / Resume
-  - **Right Click**: Reset timer back to initial session
+  - **Right Click**: Open Interactive Popup Menu (`waybar-pomodoro menu`) or Reset
   - **Middle Click**: Skip to next phase (Work ↔ Break)
   - **Scroll Wheel**: Fine-tune timer on the fly (`+1m` / `-1m`)
+- **🪟 Interactive Popup Menu**: Right-click to open an interactive desktop popup menu (auto-detects Rofi, Wofi, Fuzzel, Tofi, Zenity, or GTK) with quick sprint presets (15m, 25m, 45m, 60m), controls, and adjustments.
+- **🟩 GitHub-Style Study Tracker**: Visual contribution heatmap in terminal (`stats --heatmap`) and standalone vector SVG chart (`stats --chart`) with streak badges and daily focus history.
 - **🔇 Minimalist & Distraction-Free**: Supports clean numbers-only mode (e.g. `30:00`), icon mode (`🍅 30:00`), or custom formatted templates.
 - **🏷️ Full Waybar Protocol Support**: Exposes `text`, `alt`, `tooltip`, `class`, and `percentage` fields, allowing native `{alt}` token and Waybar `format-icons` mapping.
 - **🔔 Desktop & Sound Alerts**: Native `notify-send` alerts with custom categories (`timer`), notification replacement IDs (no notification spam), and audio chime playback via `canberra-gtk-play`, `pw-play`, `paplay`, `ogg123`, `ffplay`, or `mpv`.
@@ -149,7 +151,7 @@ Add `"custom/pomodoro"` to your `modules-center`, `modules-left`, or `modules-ri
         "return-type": "json",
         "exec": "waybar-pomodoro status",
         "on-click": "waybar-pomodoro toggle",
-        "on-click-right": "waybar-pomodoro reset",
+        "on-click-right": "waybar-pomodoro menu",
         "on-click-middle": "waybar-pomodoro skip",
         "on-scroll-up": "waybar-pomodoro adjust +1m",
         "on-scroll-down": "waybar-pomodoro adjust -1m",
@@ -176,7 +178,7 @@ Because `waybar-pomodoro` outputs the native `alt` field (`idle`, `work`, `short
             "idle": "⏱"
         },
         "on-click": "waybar-pomodoro toggle",
-        "on-click-right": "waybar-pomodoro reset",
+        "on-click-right": "waybar-pomodoro menu",
         "interval": 1,
         "signal": 8
     }
@@ -192,7 +194,7 @@ Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a
 │ ▰▰▰▰▰▰▱▱▱▱▱▱  12:30 (50%)                    │
 │ ───────────────────────────────────────────  │
 │ • Left-click:   Toggle / Pause               │
-│ • Right-click:  Reset Session                │
+│ • Right-click:  Menu / Reset                 │
 │ • Middle-click: Skip Phase                   │
 │ • Scroll:       ±1 min                       │
 │ ───────────────────────────────────────────  │
@@ -201,7 +203,36 @@ Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a
 └──────────────────────────────────────────────┘
 ```
 
-### 3. Style in `~/.config/waybar/style.css`
+### 3. Interactive Right-Click Popup Menu
+
+Right-clicking the module opens a sleek popup launcher menu (`waybar-pomodoro menu`) that integrates automatically with your desktop theme. It auto-detects `rofi`, `wofi`, `fuzzel`, `tofi`, `zenity`, or `gtk`, working seamlessly across all Wayland compositors:
+
+- **Playback Controls**: Toggle, Pause, Resume, Skip Phase, Reset, or Stop.
+- **Quick Duration Presets**: `⚡ 15m Sprint`, `🍅 25m Classic`, `🎯 45m Deep Work`, `🏆 60m Marathon`.
+- **Quick Adjustments**: Add `+5m` or Subtract `-5m` immediately.
+- **Custom Time Prompt**: Type any duration on the fly (e.g. `35m`).
+- **One-Click Analytics**: Launch the study tracker or export your contribution chart.
+
+*(Optional)* For users who prefer Waybar's native GTK context menu directly anchored to the bar, see the ready-to-use [`docs/waybar-menu.xml`](docs/waybar-menu.xml) recipe in [Configuration Guide](docs/CONFIGURATION.md#recipe-4-interactive-right-click-popup-menu).
+
+### 4. GitHub-Style Study Tracker (Heatmap & Chart)
+
+Track your focus habit with a visual contribution tracker just like GitHub's contribution graph!
+
+- **Terminal Unicode Heatmap** (`waybar-pomodoro stats --heatmap`):
+  Renders a 7-row (Mon–Sun) activity matrix with 4-level color-graded intensity, month headers, active streak, and all-time records.
+- **Vector SVG / Browser Chart** (`waybar-pomodoro stats --chart`):
+  Generates and opens a standalone vector graphic with hover tooltips (`date: N sessions, M mins`) styled to your favorite theme (`github-dark`, `catppuccin`, `gruvbox`, `tokyo-night`, `nord`).
+
+```bash
+# Display terminal heatmap
+waybar-pomodoro stats --heatmap
+
+# Open standalone SVG contribution chart in browser
+waybar-pomodoro stats --chart --theme catppuccin
+```
+
+### 5. Style in `~/.config/waybar/style.css`
 
 Include your preferred theme from [`docs/themes/`](docs/themes/) directly in your Waybar `style.css`:
 

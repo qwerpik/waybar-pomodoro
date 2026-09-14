@@ -177,20 +177,31 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(ret, 0)
             self.assertIn("Test alert sent", f.getvalue())
 
-            # 11. config --show & config --init
+            # 12. stats --heatmap
             f = io.StringIO()
             with redirect_stdout(f):
-                ret = main(base_args + ["config", "--show"])
+                ret = main(base_args + ["stats", "--heatmap", "--weeks", "10", "--no-color"])
             self.assertEqual(ret, 0)
-            cfg_data = json.loads(f.getvalue().strip())
-            self.assertEqual(cfg_data["work_duration"], 20)
+            self.assertIn("POMODORO STUDY TRACKER", f.getvalue())
 
-            init_cfg = Path(tmpdir) / "init_cfg.json"
+            # 13. stats --export-chart
+            chart_file = Path(tmpdir) / "exported_chart.svg"
             f = io.StringIO()
             with redirect_stdout(f):
-                ret = main(["-c", str(init_cfg), "config", "--init"])
+                ret = main(
+                    base_args + ["stats", "--export-chart", str(chart_file), "--theme", "nord"]
+                )
             self.assertEqual(ret, 0)
-            self.assertTrue(init_cfg.exists())
+            self.assertTrue(chart_file.exists())
+            self.assertIn("exported to", f.getvalue())
+
+            # 14. menu subcommand
+            from unittest.mock import patch
+
+            with patch("waybar_pomodoro.cli.MenuLauncher.run", return_value=0) as mock_menu:
+                ret = main(base_args + ["menu", "--backend", "rofi"])
+                self.assertEqual(ret, 0)
+                mock_menu.assert_called_once()
 
 
 if __name__ == "__main__":

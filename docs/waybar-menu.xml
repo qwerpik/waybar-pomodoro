@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object class="GtkMenu" id="menu">
+    <child>
+      <object class="GtkMenuItem" id="start_pause">
+        <property name="label">⏯️  Start / Pause / Resume</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="skip">
+        <property name="label">⏭️  Skip Current Phase</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="reset">
+        <property name="label">🔄  Reset Session</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="sep1" />
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="preset_15">
+        <property name="label">⚡ 15m Sprint</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="preset_25">
+        <property name="label">🍅 25m Classic Pomodoro</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="preset_45">
+        <property name="label">🎯 45m Deep Work</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="preset_60">
+        <property name="label">🏆 60m Marathon Session</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="sep2" />
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="study_tracker">
+        <property name="label">📊 Open Study Tracker Chart</property>
+      </object>
+    </child>
+  </object>
+</interface>

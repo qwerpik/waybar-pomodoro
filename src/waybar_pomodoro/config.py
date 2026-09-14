@@ -9,7 +9,7 @@ import os
 import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 def get_default_config_dir() -> Path:
@@ -74,6 +74,12 @@ class PomodoroConfig:
     # Waybar integration
     waybar_signal: int = 8  # SIGRTMIN+8
 
+    # Menu & launcher popup integration
+    menu_backend: str = "auto"  # "auto", "rofi", "wofi", "fuzzel", "tofi", "zenity", "gtk"
+    menu_custom_command: str = ""  # optional custom dmenu command
+    # Duration presets in minutes
+    menu_presets: List[int] = field(default_factory=lambda: [15, 25, 45, 60])
+
     # File locations
     state_file: str = field(default_factory=lambda: str(get_default_cache_dir() / "state.json"))
     stats_file: str = field(default_factory=lambda: str(get_default_data_dir() / "stats.json"))
@@ -115,6 +121,8 @@ class PomodoroConfig:
             "notification_urgency_work_end",
             "notification_urgency_break_end",
             "notification_category",
+            "menu_backend",
+            "menu_custom_command",
             "state_file",
             "stats_file",
         }
@@ -134,6 +142,18 @@ class PomodoroConfig:
                     setattr(instance, k, v.lower() in ("true", "1", "yes"))
             elif k in str_fields and isinstance(v, str):
                 setattr(instance, k, v)
+
+        if "menu_presets" in data and isinstance(data["menu_presets"], list):
+            presets = []
+            for p in data["menu_presets"]:
+                try:
+                    pint = int(p)
+                    if 1 <= pint <= 1440:
+                        presets.append(pint)
+                except (ValueError, TypeError):
+                    pass
+            if presets:
+                instance.menu_presets = presets
 
         return instance
 

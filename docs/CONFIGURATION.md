@@ -79,6 +79,9 @@ Below is the complete reference of all 21 configuration options supported in `co
 | `auto_start_break` | `bool` | `true` | `true`, `false` | Automatically begin the break countdown when work ends. |
 | `auto_start_work` | `bool` | `true` | `true`, `false` | Automatically begin the next work session when break ends. |
 | `waybar_signal` | `int` | `8` | `0` – `30` | Realtime signal offset (`SIGRTMIN + N`) used to trigger Waybar UI updates (`0` = disabled). |
+| `menu_backend` | `string` | `"auto"` | `"auto"`, `"rofi"`, `"wofi"`, `"fuzzel"`, `"tofi"`, `"zenity"`, `"gtk"` | Backend engine used when launching `waybar-pomodoro menu`. |
+| `menu_custom_command` | `string` | `""` | Command string | Optional custom launcher command string (e.g. `"rofi -dmenu -theme ~/.config/rofi/pomodoro.rasi"`). |
+| `menu_presets` | `list[int]` | `[15, 25, 45, 60]` | List of ints (`1`–`1440`) | Quick duration presets shown in the right-click popup menu. |
 | `state_file` | `string` | `~/.cache/waybar-pomodoro/state.json` | Valid path | Absolute or tilde path for the atomic state file. |
 | `stats_file` | `string` | `~/.local/share/waybar-pomodoro/stats.json` | Valid path | Absolute or tilde path for the focus history and streak database. |
 
@@ -202,6 +205,53 @@ Using Nerd Font icons instead of color emojis:
   "format_long_break": "{icon} {time}",
   "format_paused": "{icon} {time}",
   "format_idle": "{icon} {time}"
+}
+```
+
+### Recipe 4: Interactive Right-Click Popup Menu
+Configure custom launcher behavior and sprint presets in `config.json`:
+```json
+{
+  "menu_backend": "auto",
+  "menu_presets": [15, 25, 45, 60]
+}
+```
+
+Then in Waybar's `config.jsonc`, trigger the menu on right-click:
+```jsonc
+"custom/pomodoro": {
+    "exec": "waybar-pomodoro status",
+    "return-type": "json",
+    "interval": 1,
+    "signal": 8,
+    "on-click": "waybar-pomodoro toggle",
+    "on-click-right": "waybar-pomodoro menu",
+    "on-click-middle": "waybar-pomodoro skip",
+    "on-scroll-up": "waybar-pomodoro adjust +1m",
+    "on-scroll-down": "waybar-pomodoro adjust -1m"
+}
+```
+
+*(Alternative)* If you prefer Waybar's native GTK context menu directly anchored to your bar, copy [`docs/waybar-menu.xml`](waybar-menu.xml) to `~/.config/waybar/pomodoro-menu.xml` and configure:
+```jsonc
+"custom/pomodoro": {
+    "exec": "waybar-pomodoro status",
+    "return-type": "json",
+    "interval": 1,
+    "signal": 8,
+    "on-click": "waybar-pomodoro toggle",
+    "menu": "on-click-right",
+    "menu-file": "$HOME/.config/waybar/pomodoro-menu.xml",
+    "menu-actions": {
+        "start_pause": "waybar-pomodoro toggle",
+        "skip": "waybar-pomodoro skip",
+        "reset": "waybar-pomodoro reset",
+        "preset_15": "waybar-pomodoro start 15m",
+        "preset_25": "waybar-pomodoro start 25m",
+        "preset_45": "waybar-pomodoro start 45m",
+        "preset_60": "waybar-pomodoro start 60m",
+        "study_tracker": "waybar-pomodoro stats --chart"
+    }
 }
 ```
 

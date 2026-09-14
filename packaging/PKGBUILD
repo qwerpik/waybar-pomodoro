@@ -1,6 +1,6 @@
 # Maintainer: qwerpik <qwerpik@users.noreply.github.com>
 pkgname=waybar-pomodoro-git
-pkgver=1.0.3
+pkgver=1.1.0
 pkgrel=1
 pkgdesc="A lightweight, customizable Pomodoro timer module for Waybar"
 arch=('any')
@@ -8,6 +8,10 @@ url="https://github.com/qwerpik/waybar-pomodoro"
 license=('MIT')
 depends=('python' 'libnotify' 'procps-ng')
 optdepends=(
+    'rofi: Interactive GUI popup menu via waybar-pomodoro menu'
+    'wofi: Wayland launcher menu alternative'
+    'fuzzel: Lightweight Wayland launcher alternative'
+    'zenity: Universal GTK dialog popup alternative'
     'sound-theme-freedesktop: Default notification sounds'
     'libcanberra: Sound playback via canberra-gtk-play'
     'pulseaudio-utils: Alternative sound playback via paplay'

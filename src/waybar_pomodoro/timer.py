@@ -543,7 +543,7 @@ class PomodoroTimer:
             f"<tt>{bar}</tt>  <b>{time_str}</b> <span alpha='60%'>({percentage}%)</span>",
             "<span alpha='25%'>─────────────────────────────</span>",
             "<span alpha='60%'>• Left-click:</span>   <b>Toggle / Pause</b>",
-            "<span alpha='60%'>• Right-click:</span>  <b>Reset Session</b>",
+            "<span alpha='60%'>• Right-click:</span>  <b>Menu / Reset</b>",
             "<span alpha='60%'>• Middle-click:</span> <b>Skip Phase</b>",
             "<span alpha='60%'>• Scroll:</span>       <b>±1 min</b>",
             "<span alpha='25%'>─────────────────────────────</span>",
