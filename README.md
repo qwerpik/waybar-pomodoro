@@ -56,6 +56,7 @@ Designed with zero external dependencies (pure Python 3 standard library), atomi
 
 * 📖 **[Multi-Distribution Installation Guide](docs/INSTALLATION.md)**: Distro guides (Arch, Debian/Ubuntu PEP 668, Fedora, Nix), `$PATH` configuration, audio backend priorities, and font setup.
 * 💻 **[Command Line Interface (CLI) & Scripting Guide](docs/CLI.md)**: Complete CLI command matrix, global flags, scripting recipes, rofi/dmenu launcher, and window manager keybindings.
+* 🔧 **[Configuration Guide & Options Reference](docs/CONFIGURATION.md)**: Exhaustive reference for all 21 configuration options, format tokens, sound themes, and focus recipes.
 * 🔬 **[Engineering Case Study & Architecture](docs/ARTICLE.md)**: Deep dive into POSIX advisory locking (`fcntl.flock`), atomic durability (`os.fsync`), system suspend drift detection, and Pango progress rendering.
 * 🚀 **[Showcase & Community Pack](docs/SHOWCASE.md)**: Reddit post templates, release notes, and configuration snippets for **Hyprland**, **Sway**, and **MangoWM**.
 * 🎨 **[CSS Capsule Themes](docs/themes/)**: Modern pill badges for Catppuccin Mocha, Dracula, Gruvbox, Nord, Tokyo Night, and Minimal Black.
@@ -202,7 +203,15 @@ Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a
 
 ### 3. Style in `~/.config/waybar/style.css`
 
-#### Capsule Pill Badge Theme (Gruvbox Dark)
+Include your preferred theme from [`docs/themes/`](docs/themes/) directly in your Waybar `style.css`:
+
+```css
+@import "path/to/waybar-pomodoro/docs/themes/gruvbox.css";
+```
+
+<details>
+<summary>🎨 <b>Click to expand standalone inline CSS (Gruvbox Capsule Pill)</b></summary>
+
 ```css
 #custom-pomodoro {
     background-color: #282828;
@@ -251,6 +260,7 @@ Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a
     opacity: 0.85;
 }
 ```
+</details>
 
 <a id="theme-presets"></a>
 ### 🎨 Theme Presets
@@ -291,7 +301,23 @@ waybar-pomodoro stats       # Display daily focus statistics and streak summary
 
 ## 🔧 Configuration (`config.json`)
 
-Configuration is stored at `~/.config/waybar-pomodoro/config.json`:
+Configuration is stored at `~/.config/waybar-pomodoro/config.json` (generate with `waybar-pomodoro config --init`).
+
+### Key Settings
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `work_duration` | `int` | `30` | Work/focus duration in minutes (`1` – `1440`). |
+| `short_break_duration` | `int` | `5` | Short break duration in minutes (`1` – `360`). |
+| `long_break_duration` | `int` | `15` | Long break duration in minutes (`1` – `360`). |
+| `cycles_before_long_break` | `int` | `4` | Number of work sessions before triggering a long break. |
+| `style` | `string` | `"minimal"` | Display style: `"minimal"` (digits only), `"icon"`, or `"custom"`. |
+| `sound_enabled` | `bool` | `true` | Audio chimes upon completion (`canberra`, `pipewire`, `pulse`). |
+| `auto_start_break` | `bool` | `true` | Automatically begin break countdown when work ends. |
+| `auto_start_work` | `bool` | `true` | Automatically begin next work session when break ends. |
+
+<details>
+<summary>⚙️ <b>Click to expand full default config.json template</b></summary>
 
 ```json
 {
@@ -323,11 +349,9 @@ Configuration is stored at `~/.config/waybar-pomodoro/config.json`:
   "waybar_signal": 8
 }
 ```
+</details>
 
-### Display Styles
-- `"style": "minimal"`: Pure numbers only (e.g. `30:00`, `⏸ 29:45`). Clean and completely distraction-free.
-- `"style": "icon"`: Prepends phase icon (e.g. `🍅 30:00`, `☕ 05:00`).
-- `"style": "custom"`: Uses the custom format strings defined in `format_work`, `format_paused`, etc. Supported template tags: `{time}`, `{icon}`, `{cycle}`, `{phase}`.
+👉 **For the complete configuration reference (all 21 parameters, custom token formatting `{cycle}`, `{phase}`, audio fallbacks, and focus recipes), see [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md).**
 
 ---
 
