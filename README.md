@@ -2,12 +2,6 @@
   <img src="assets/banner.png" alt="waybar-pomodoro banner" width="100%" />
 </p>
 
-<h1 align="center">🍅 waybar-pomodoro</h1>
-
-<p align="center">
-  <strong>A distraction-free, zero-dependency & concurrency-hardened Pomodoro timer module for Waybar.</strong>
-</p>
-
 <p align="center">
   <a href="https://github.com/qwerpik/waybar-pomodoro/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/qwerpik/waybar-pomodoro/test.yml?branch=main&label=CI&style=flat-square&logo=githubactions&logoColor=white&color=a6e3a1" alt="CI Status" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-f38ba8?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License: MIT" /></a>
@@ -16,19 +10,91 @@
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/Code%20Style-Ruff-cba6f7?style=flat-square&logo=ruff&logoColor=white" alt="Code style: ruff" /></a>
 </p>
 
+<h3 align="center">Zero-dependency Pomodoro timer for Waybar. Atomic, instant, distraction-free.</h3>
+
 <p align="center">
+  Pure Python stdlib only &nbsp;•&nbsp; <code>fcntl</code> + <code>fsync</code> race-free &nbsp;•&nbsp; <code>SIGRTMIN+8</code> instant refresh &nbsp;•&nbsp; Pango tooltips &nbsp;•&nbsp; stats &amp; heatmaps
+</p>
+
+<p align="center">
+  <a href="#why">Why</a> •
+  <a href="#try-in-30-seconds">Quickstart</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
   <a href="#waybar-configuration">Waybar Config</a> •
   <a href="#theme-presets">Themes</a> •
-  <a href="docs/CLI.md">CLI Guide</a> •
-  <a href="docs/INSTALLATION.md">Distro Guides</a> •
+  <a href="docs/CLI.md">CLI</a> •
+  <a href="docs/INSTALLATION.md">Distros</a> •
   <a href="docs/ARTICLE.md">Architecture</a>
 </p>
 
-<br/>
+<a id="why"></a>
+<table>
+<tr>
+<td width="33%" valign="top">
 
-Designed with zero external dependencies (pure Python 3 standard library), atomic advisory file locking, instant reactive signal updates (`SIGRTMIN+8`), mouse wheel duration adjustments, customizable sound/desktop notifications, rich Pango tooltips, and daily focus statistics.
+**⚡ Zero baggage**
+Pure Python 3, no pip deps, no venv. Clone and run.
+
+</td>
+<td width="33%" valign="top">
+
+**🔒 Never corrupts**
+Advisory locks + atomic writes. Scroll the wheel as fast as you want.
+
+</td>
+<td width="33%" valign="top">
+
+**🎯 Feels native**
+Realtime signals, Pango tooltip, popup menu, 6 capsule themes.
+
+</td>
+</tr>
+</table>
+
+<a id="try-in-30-seconds"></a>
+> [!TIP]
+> **Try in 30 seconds**
+> ```bash
+> git clone https://github.com/qwerpik/waybar-pomodoro.git
+> cd waybar-pomodoro && ./install.sh
+> waybar-pomodoro toggle && waybar-pomodoro status --heatmap
+> ```
+
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**🟩 In the bar**
+```jsonc
+"custom/pomodoro": {
+    "exec": "waybar-pomodoro status",
+    "on-click": "waybar-pomodoro toggle",
+    "on-click-right": "waybar-pomodoro menu",
+    "on-scroll-up": "waybar-pomodoro adjust +1m",
+    "interval": 1, "signal": 8
+}
+```
+`🍅 25:00` → `☕ 05:00` → `🌴 15:00`
+
+</td>
+<td valign="top" width="50%">
+
+**✨ On hover & in terminal**
+```text
+🍅 Focus [2/4]  Running
+▰▰▰▰▰▰▱▱▱▱▱▱ 12:30 (50%)
+Today: 3 sessions • 90m
+Streak: 5 days 🔥
+```
+```bash
+stats --heatmap  # terminal
+stats --chart    # SVG in browser
+```
+
+</td>
+</tr>
+</table>
 
 ---
 
