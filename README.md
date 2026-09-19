@@ -14,7 +14,7 @@
 <h3 align="center">Aesthetic, concurrency-hardened focus timer for Waybar.</h3>
 
 <p align="center">
-  Pure Python stdlib only &nbsp;•&nbsp; <code>fcntl</code> + <code>fsync</code> race-free &nbsp;•&nbsp; <code>SIGRTMIN+8</code> instant refresh &nbsp;•&nbsp; Pango tooltips &nbsp;•&nbsp; stats &amp; heatmaps
+  Pure Python stdlib only &nbsp;•&nbsp; 0% CPU streaming &nbsp;•&nbsp; <code>fcntl</code> + <code>fsync</code> race-free &nbsp;•&nbsp; Screen lock &amp; Focus DND &nbsp;•&nbsp; MangoWM / Hyprland / Sway / i3
 </p>
 
 <p align="center">
@@ -23,9 +23,10 @@
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
   <a href="#waybar-configuration">Waybar Config</a> •
+  <a href="docs/INTEGRATIONS.md">Integrations</a> •
   <a href="#theme-presets">Themes</a> •
   <a href="docs/CLI.md">CLI</a> •
-  <a href="docs/INSTALLATION.md">Distros</a> •
+  <a href="docs/CONFIGURATION.md">Config</a> •
   <a href="docs/ARTICLE.md">Architecture</a>
 </p>
 
@@ -34,20 +35,20 @@
 <tr>
 <td width="33%" valign="top">
 
-**⚡ Zero baggage**
-Pure Python 3, no pip deps, no venv. Clone and run.
+**⚡ Zero baggage & 0% CPU**
+Pure Python 3, no pip deps. Kernel `epoll_wait` streaming daemon.
 
 </td>
 <td width="33%" valign="top">
 
 **🔒 Never corrupts**
-Advisory locks + atomic writes. Scroll the wheel as fast as you want.
+Advisory locks + atomic writes + sleep drift resilience.
 
 </td>
 <td width="33%" valign="top">
 
 **🎯 Feels native**
-Realtime signals, Pango tooltip, popup menu, 6 capsule themes.
+Auto-pause on screen lock, Focus DND, lifecycle event hooks, popup menu.
 
 </td>
 </tr>
@@ -59,6 +60,7 @@ Realtime signals, Pango tooltip, popup menu, 6 capsule themes.
 > ```bash
 > git clone https://github.com/qwerpik/waybar-pomodoro.git
 > cd waybar-pomodoro && ./install.sh
+> waybar-pomodoro setup mangowm --append   # or hyprland, sway, i3
 > waybar-pomodoro toggle && waybar-pomodoro status --heatmap
 > ```
 
@@ -66,14 +68,16 @@ Realtime signals, Pango tooltip, popup menu, 6 capsule themes.
 <tr>
 <td valign="top" width="50%">
 
-**🟩 In the bar**
+**🟩 In the bar (0% CPU Streaming)**
 ```jsonc
 "custom/pomodoro": {
-    "exec": "waybar-pomodoro status",
+    "format": "{}",
+    "return-type": "json",
+    "exec": "waybar-pomodoro stream",
     "on-click": "waybar-pomodoro toggle",
     "on-click-right": "waybar-pomodoro menu",
     "on-scroll-up": "waybar-pomodoro adjust +1m",
-    "interval": 1, "signal": 8
+    "on-scroll-down": "waybar-pomodoro adjust -1m"
 }
 ```
 `🍅 25:00` → `☕ 05:00` → `🌴 15:00`
@@ -104,12 +108,13 @@ stats --chart    # SVG in browser
 
 | | Capability | What you get |
 | :--- | :--- | :--- |
-| ⚡ | **Zero dependencies** | Pure Python 3 stdlib. No venv, no pip. |
-| 🔒 | **Race-free** | `fcntl.flock` + atomic `fsync` writes. Wheel-scroll as fast as you want. |
-| 🎯 | **Instant** | `SIGRTMIN+8` refresh, Pango tooltip with progress bar, popup menu (rofi/wofi/fuzzel). |
-| 🖱️ | **Native bar UX** | Click toggle, right-click menu, middle-click skip, scroll `±1m`, `{alt}` + `format-icons`. |
-| 🟩 | **Study tracker** | Terminal heatmap (`stats --heatmap`) + SVG chart (`stats --chart`), streaks, JSON/CSV export. |
-| 🔔 | **No surprises** | Suspend-drift protection, `notify-send` + sound backends, 6 capsule themes. |
+| ⚡ | **0.00% CPU Streaming** | Persistent `stream` daemon with inotify state reactions and integer-second alignment. |
+| 🔌 | **Compositors & Hooks** | Turnkey CLI setup (`setup`) for MangoWM, Hyprland, Sway, i3, plus shell event hooks. |
+| 🔒 | **Screen Lock & Idle** | Auto-pause on lock/inactivity (`idle-pause`), resume on unlock (`idle-resume`). |
+| 🔕 | **Focus DND** | Auto-silence notifications during work sessions (`swaync`, `dunst`, `mako`). |
+| 🛡️ | **Race-free & Resilient** | `fcntl.flock` + atomic writes + microsecond sleep/suspend drift detection. |
+| 🎯 | **Native bar UX** | Click toggle, right-click menu, middle-click skip, scroll `±1m`, Pango progress bar. |
+| 🟩 | **Study tracker** | Terminal heatmap (`stats --heatmap`) + SVG chart (`stats --chart`), streaks, JSON/CSV. |
 
 <details>
 <summary><b>Full feature list (13 items)</b></summary>
@@ -253,14 +258,12 @@ Add `"custom/pomodoro"` to your `modules-center`, `modules-left`, or `modules-ri
     "custom/pomodoro": {
         "format": "{}",
         "return-type": "json",
-        "exec": "waybar-pomodoro status",
+        "exec": "waybar-pomodoro stream",
         "on-click": "waybar-pomodoro toggle",
         "on-click-right": "waybar-pomodoro menu",
         "on-click-middle": "waybar-pomodoro skip",
         "on-scroll-up": "waybar-pomodoro adjust +1m",
-        "on-scroll-down": "waybar-pomodoro adjust -1m",
-        "interval": 1,
-        "signal": 8
+        "on-scroll-down": "waybar-pomodoro adjust -1m"
     }
 }
 ```

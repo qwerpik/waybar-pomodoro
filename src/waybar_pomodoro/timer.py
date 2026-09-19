@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, Tuple
 
 from .config import PomodoroConfig
+from .dnd import DndManager
 from .notifier import Notifier
 from .stats import PomodoroStats
 
@@ -224,6 +225,36 @@ class PomodoroTimer:
             except Exception:
                 pass
 
+    def _dispatch_event(self, event: str, state: Dict[str, Any]) -> None:
+        """Asynchronously triggers hook scripts and config commands."""
+        from .hooks import dispatch_hook
+
+        dispatch_hook(
+            event=event,
+            state=state,
+            hooks_enabled=self.config.hooks_enabled,
+            hooks_dir=self.config.hooks_dir,
+            custom_hooks=self.config.hooks,
+        )
+
+    def _apply_dnd(self, state: Dict[str, Any]) -> None:
+        """Enables or disables Do Not Disturb mode based on current state."""
+        if not self.config.auto_dnd:
+            return
+        from .dnd import set_dnd
+
+        curr_state = state.get("state")
+        curr_phase = state.get("phase")
+        should_dnd = curr_state == "running" and curr_phase == "work"
+        is_dnd = state.get("dnd_active", False)
+
+        if should_dnd and not is_dnd:
+            if set_dnd(True, self.config.dnd_provider):
+                state["dnd_active"] = True
+        elif not should_dnd and is_dnd:
+            set_dnd(False, self.config.dnd_provider)
+            state["dnd_active"] = False
+
     @staticmethod
     def _stamp_running(state: Dict[str, Any]) -> None:
         """Record monotonic/boot clocks at the moment a run (re)starts."""
@@ -290,6 +321,47 @@ class PomodoroTimer:
         with self._transaction() as state:
             self.check_completion(state)
             return state
+
+    def _sync_dnd(self, state: Dict[str, Any]) -> None:
+        """Align system DND with the timer phase (no-op unless auto_dnd).
+
+        Claims DND only when the system doesn't already have it on, so a
+        user-muted desktop is never un-muted on break. Paused sessions keep
+        whatever DND state they have.
+        """
+        if not self.config.auto_dnd:
+            return
+        curr_state = state.get("state")
+        curr_phase = state.get("phase")
+        try:
+            manager = DndManager(self.config)
+        except Exception:
+            return
+        if curr_state == "running" and curr_phase == "work":
+            if state.get("dnd_active"):
+                return
+            try:
+                already_on = manager.is_dnd_enabled()
+            except Exception:
+                already_on = None
+            if already_on is True:
+                return
+            try:
+                if manager.set_dnd(True):
+                    state["dnd_active"] = True
+            except Exception:
+                pass
+        elif curr_state == "idle" or (
+            curr_state == "running" and curr_phase in ("short_break", "long_break")
+        ):
+            if not state.get("dnd_active"):
+                return
+            try:
+                manager.set_dnd(False)
+            except Exception:
+                pass
+            finally:
+                state["dnd_active"] = False
 
     def check_completion(self, state: Dict[str, Any]) -> bool:
         """
@@ -363,14 +435,19 @@ class PomodoroTimer:
                 self.notifier.send_notification(title, msg, urgency=urgency, icon=icon)
                 self.notifier.play_sound(self.config.sound_work_end)
 
+            self._dispatch_event("complete", state)
+
             if self.config.auto_start_break and not was_suspended:
                 state["state"] = "running"
                 state["end_time"] = time.time() + state["time_remaining"]
                 self._stamp_running(state)
+                self._apply_dnd(state)
+                self._dispatch_event("break_start", state)
             else:
                 state["state"] = "idle"
                 state["end_time"] = 0.0
                 self._clear_run_stamps(state)
+                self._apply_dnd(state)
 
         else:  # Finished a break
             cycle = state.get("cycle", 1)
@@ -393,14 +470,19 @@ class PomodoroTimer:
                 )
                 self.notifier.play_sound(self.config.sound_break_end)
 
+            self._dispatch_event("complete", state)
+
             if self.config.auto_start_work and not was_suspended:
                 state["state"] = "running"
                 state["end_time"] = time.time() + state["time_remaining"]
                 self._stamp_running(state)
+                self._apply_dnd(state)
+                self._dispatch_event("work_start", state)
             else:
                 state["state"] = "idle"
                 state["end_time"] = 0.0
                 self._clear_run_stamps(state)
+                self._apply_dnd(state)
 
         return True
 
@@ -422,6 +504,7 @@ class PomodoroTimer:
         return remaining, percentage
 
     def toggle(self) -> None:
+        event = "work_start"
         with self._transaction() as state:
             # Check completion first to avoid locking at 00:00
             self.check_completion(state)
@@ -431,17 +514,26 @@ class PomodoroTimer:
                 state["state"] = "paused"
                 state["time_remaining"] = max(0, int(round(state["end_time"] - now)))
                 state["end_time"] = 0.0
+                state["paused_by_idle"] = False
                 self._clear_run_stamps(state)
+                event = "pause"
             elif state["state"] == "paused":
                 state["state"] = "running"
                 state["end_time"] = now + state["time_remaining"]
+                state["paused_by_idle"] = False
                 self._stamp_running(state)
+                event = "resume"
             else:  # idle
                 state["state"] = "running"
                 state["end_time"] = now + state["time_remaining"]
+                state["paused_by_idle"] = False
                 self._stamp_running(state)
+                event = "work_start" if state.get("phase") == "work" else "break_start"
+
+            self._apply_dnd(state)
 
         self.signal_waybar()
+        self._dispatch_event(event, state)
 
     def start(self, duration_seconds: Optional[int] = None) -> None:
         with self._transaction() as state:
@@ -455,9 +547,12 @@ class PomodoroTimer:
 
             state["state"] = "running"
             state["end_time"] = now + state["time_remaining"]
+            state["paused_by_idle"] = False
             self._stamp_running(state)
+            self._apply_dnd(state)
 
         self.signal_waybar()
+        self._dispatch_event("work_start" if state.get("phase") == "work" else "break_start", state)
 
     def pause(self) -> None:
         with self._transaction() as state:
@@ -467,9 +562,12 @@ class PomodoroTimer:
                 state["state"] = "paused"
                 state["time_remaining"] = max(0, int(round(state["end_time"] - now)))
                 state["end_time"] = 0.0
+                state["paused_by_idle"] = False
                 self._clear_run_stamps(state)
+                self._apply_dnd(state)
 
         self.signal_waybar()
+        self._dispatch_event("pause", state)
 
     def resume(self) -> None:
         with self._transaction() as state:
@@ -478,9 +576,12 @@ class PomodoroTimer:
             if state["state"] == "paused":
                 state["state"] = "running"
                 state["end_time"] = now + state["time_remaining"]
+                state["paused_by_idle"] = False
                 self._stamp_running(state)
+                self._apply_dnd(state)
 
         self.signal_waybar()
+        self._dispatch_event("resume", state)
 
     def reset(self, duration_seconds: Optional[int] = None) -> None:
         work_sec = (
@@ -495,11 +596,15 @@ class PomodoroTimer:
             state["end_time"] = 0.0
             state["total_time"] = work_sec
             state["cycle"] = 1
+            state["paused_by_idle"] = False
             self._clear_run_stamps(state)
+            self._apply_dnd(state)
 
         self.signal_waybar()
+        self._dispatch_event("reset", state)
 
     def skip(self) -> None:
+        event = "work_start"
         with self._transaction() as state:
             self.check_completion(state)
             now = time.time()
@@ -515,18 +620,23 @@ class PomodoroTimer:
                     state["phase"] = "short_break"
                     state["total_time"] = self.config.short_break_duration * 60
                     state["time_remaining"] = state["total_time"]
+                event = "break_start"
             else:
                 cycle = state.get("cycle", 1)
                 state["cycle"] = (cycle % max_cycles) + 1
                 state["phase"] = "work"
                 state["total_time"] = self.config.work_duration * 60
                 state["time_remaining"] = state["total_time"]
+                event = "work_start"
 
             if state["state"] == "running":
                 state["end_time"] = now + state["time_remaining"]
                 self._stamp_running(state)
 
+            self._apply_dnd(state)
+
         self.signal_waybar()
+        self._dispatch_event(event, state)
 
     def adjust(self, delta_seconds: int) -> None:
         """

@@ -80,6 +80,19 @@ class PomodoroConfig:
     # Duration presets in minutes
     menu_presets: List[int] = field(default_factory=lambda: [15, 25, 45, 60])
 
+    # Focus DND (Do Not Disturb) integration
+    auto_dnd: bool = False
+    dnd_provider: str = "auto"  # "auto", "swaync", "dunst", "mako"
+
+    # Idle & Screen Lock integration
+    idle_resume_notify: bool = True
+    idle_resume_mode: str = "prompt"  # "prompt", "auto", "keep"
+
+    # Visual & Lifecycle Event Hooks
+    hooks_enabled: bool = True
+    hooks_dir: str = field(default_factory=lambda: str(get_default_config_dir() / "hooks"))
+    hooks: Dict[str, str] = field(default_factory=dict)
+
     # File locations
     state_file: str = field(default_factory=lambda: str(get_default_cache_dir() / "state.json"))
     stats_file: str = field(default_factory=lambda: str(get_default_data_dir() / "stats.json"))
@@ -103,6 +116,9 @@ class PomodoroConfig:
             "notification_enabled",
             "auto_start_break",
             "auto_start_work",
+            "auto_dnd",
+            "idle_resume_notify",
+            "hooks_enabled",
         }
         str_fields = {
             "style",
@@ -123,6 +139,9 @@ class PomodoroConfig:
             "notification_category",
             "menu_backend",
             "menu_custom_command",
+            "dnd_provider",
+            "idle_resume_mode",
+            "hooks_dir",
             "state_file",
             "stats_file",
         }
@@ -154,6 +173,14 @@ class PomodoroConfig:
                     pass
             if presets:
                 instance.menu_presets = presets
+
+        if "hooks" in data and isinstance(data["hooks"], dict):
+            instance.hooks = {str(hk): str(hv) for hk, hv in data["hooks"].items()}
+
+        if instance.dnd_provider not in ("auto", "swaync", "dunst", "mako"):
+            instance.dnd_provider = "auto"
+        if instance.idle_resume_mode not in ("prompt", "auto", "keep"):
+            instance.idle_resume_mode = "prompt"
 
         return instance
 

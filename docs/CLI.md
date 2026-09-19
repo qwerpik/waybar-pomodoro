@@ -17,6 +17,10 @@
    - [Interactive Popup Menu](#6-interactive-popup-menu)
    - [Configuration Management](#7-configuration-management)
    - [Testing Alerts](#8-testing-alerts)
+   - [Persistent Streaming Daemon](#9-persistent-streaming-daemon)
+   - [Automated Compositor Setup](#10-automated-compositor-setup)
+   - [Screen Lock & Inactivity Handling](#11-screen-lock--inactivity-handling)
+   - [Focus Do Not Disturb](#12-focus-do-not-disturb)
 4. [Window Manager Keybinding Configurations](#window-manager-keybinding-configurations)
    - [Hyprland](#1-hyprland)
    - [Sway and i3](#2-sway-and-i3)
@@ -58,6 +62,12 @@ Below is the complete matrix of all subcommands supported by `waybar-pomodoro`:
 | Command | Arguments / Flags | Description | Example |
 | :--- | :--- | :--- | :--- |
 | `status` | `[--plain]` | Output current status payload (Waybar JSON by default, or plain text) | `waybar-pomodoro status --plain` |
+| `stream` | — | Run persistent Waybar streaming daemon with 0.00% CPU overhead | `waybar-pomodoro stream` |
+| `setup` | `[compositor] [--print \| --append \| --dry-run]` | Generate or safely append keybindings for MangoWM, Hyprland, Sway, i3 | `waybar-pomodoro setup mangowm --append` |
+| `idle-pause` | — | Auto-pause timer when screen locks or inactivity occurs (`paused_by_idle: true`) | `waybar-pomodoro idle-pause` |
+| `idle-resume` | `[--no-notify]` | Resume timer on unlock if paused by idle, preserving manual pauses | `waybar-pomodoro idle-resume` |
+| `lock-hook` | `<pause \| resume>` | Combined screen lock / unlock hook dispatcher | `waybar-pomodoro lock-hook pause` |
+| `dnd` | `[--on \| --off \| --status] [--provider PROV]` | Control Focus Do Not Disturb mode (`swaync`, `dunst`, `mako`) | `waybar-pomodoro dnd --status` |
 | `time-left` | `[-s, --seconds]` | Print remaining duration (`MM:SS` or raw seconds with `-s`) | `waybar-pomodoro time-left -s` |
 | `toggle` | — | Toggle between start, pause, and resume states | `waybar-pomodoro toggle` |
 | `start` | `[duration]` | Start or resume the timer (optionally set ad-hoc duration, e.g. `45m`) | `waybar-pomodoro start 45m` |
@@ -321,6 +331,96 @@ waybar-pomodoro test-alert
 
 ---
 
+<a id="persistent-streaming-daemon"></a>
+<a id="9-persistent-streaming-daemon"></a>
+### 9. Persistent Streaming Daemon
+
+`waybar-pomodoro stream` runs a persistent background process that emits newline-delimited JSON payloads to stdout for continuous Waybar execution (`"exec": "waybar-pomodoro stream"`).
+
+```bash
+# Run streaming mode directly in terminal to observe real-time events:
+waybar-pomodoro stream
+```
+
+**Key Highlights:**
+- **0.00% CPU overhead**: Suspends indefinitely on kernel `epoll_wait` when the timer is idle or paused.
+- **Microsecond second alignment**: Ticks execute precisely on integer-second boundaries.
+- **Event-Driven inotify reaction**: Sub-millisecond reaction times when another process touches `state.json`.
+- **Single-instance locking**: Automatically terminates with exit code 1 if another stream daemon is already active.
+
+---
+
+<a id="automated-compositor-setup"></a>
+<a id="10-automated-compositor-setup"></a>
+### 10. Automated Compositor Setup
+
+`waybar-pomodoro setup` generates and automatically configures keybindings and Waybar modules for your compositor.
+
+```bash
+# Print setup instructions for all supported compositors
+waybar-pomodoro setup
+
+# Print setup snippet for a specific window manager
+waybar-pomodoro setup mangowm
+waybar-pomodoro setup hyprland
+
+# Safely append keybindings to your compositor config with backup creation:
+waybar-pomodoro setup mangowm --append
+waybar-pomodoro setup hyprland --append
+
+# Preview modifications safely without writing files:
+waybar-pomodoro setup hyprland --append --dry-run
+```
+
+For full setup details across MangoWM, Hyprland, Sway, and i3, see [docs/INTEGRATIONS.md](INTEGRATIONS.md).
+
+---
+
+<a id="screen-lock--inactivity-handling"></a>
+<a id="11-screen-lock--inactivity-handling"></a>
+### 11. Screen Lock & Inactivity Handling
+
+Automatically pause your timer when leaving your computer and resume or notify you upon return:
+
+```bash
+# Pause active session on lock or inactivity:
+waybar-pomodoro idle-pause
+
+# Resume session on unlock (if paused by idle):
+waybar-pomodoro idle-resume
+
+# Resume without sending desktop notification:
+waybar-pomodoro idle-resume --no-notify
+
+# Screen locker hook wrapper (pause / resume):
+waybar-pomodoro lock-hook pause
+waybar-pomodoro lock-hook resume
+```
+
+---
+
+<a id="focus-do-not-disturb"></a>
+<a id="12-focus-do-not-disturb"></a>
+### 12. Focus Do Not Disturb
+
+Query and toggle Do Not Disturb mode on supported notification daemons (`swaync`, `dunst`, `mako`):
+
+```bash
+# Check current DND status:
+waybar-pomodoro dnd --status
+
+# Explicitly enable Do Not Disturb:
+waybar-pomodoro dnd --on
+
+# Explicitly disable Do Not Disturb:
+waybar-pomodoro dnd --off
+
+# Specify explicit notification provider daemon:
+waybar-pomodoro dnd --on --provider dunst
+```
+
+---
+
 <a id="window-manager-keybinding-configurations"></a>
 ## 🖥️ Window Manager Keybinding Configurations
 
@@ -537,6 +637,8 @@ fi
 ## 🔗 Related Documentation
 
 * 📖 **[Main README](../README.md)**: Overview, features, and quickstart.
+* 🔌 **[Integrations & Compositors Guide](INTEGRATIONS.md)**: Turnkey setup for MangoWM, Hyprland, Sway, i3, lock hooks, and DND.
+* 🔧 **[Configuration Guide](CONFIGURATION.md)**: Complete `config.json` options, auto-DND, and lifecycle hooks.
 * 📦 **[Installation Guide](INSTALLATION.md)**: Multi-distribution setup and audio troubleshooting.
 * 🔬 **[Engineering Case Study](ARTICLE.md)**: Concurrency, file locking, and drift detection deep dive.
 * 🚀 **[Showcase & Presets](SHOWCASE.md)**: Capsule themes and community showcases.

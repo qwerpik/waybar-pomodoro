@@ -203,6 +203,48 @@ class TestCLI(unittest.TestCase):
                 self.assertEqual(ret, 0)
                 mock_menu.assert_called_once()
 
+            # 15. setup subcommand
+            with patch("waybar_pomodoro.cli.run_setup", return_value=0) as mock_setup:
+                ret = main(base_args + ["setup", "mangowm", "--print"])
+                self.assertEqual(ret, 0)
+                mock_setup.assert_called_once_with(
+                    compositor="mangowm", dry_run=False, print_only=True, append=False
+                )
+
+            # 16. idle-pause & idle-resume
+            with patch(
+                "waybar_pomodoro.cli.handle_idle_pause", return_value=(True, "Paused by idle")
+            ) as mock_ip:
+                ret = main(base_args + ["idle-pause"])
+                self.assertEqual(ret, 0)
+                mock_ip.assert_called_once()
+
+            with patch(
+                "waybar_pomodoro.cli.handle_idle_resume", return_value=(True, "Resumed")
+            ) as mock_ir:
+                ret = main(base_args + ["idle-resume", "--no-notify"])
+                self.assertEqual(ret, 0)
+                mock_ir.assert_called_once()
+
+            # 17. lock-hook
+            with patch(
+                "waybar_pomodoro.cli.handle_idle_pause", return_value=(True, "Paused by lock")
+            ) as mock_lh:
+                ret = main(base_args + ["lock-hook", "pause"])
+                self.assertEqual(ret, 0)
+                mock_lh.assert_called_once()
+
+            # 18. dnd
+            with patch("waybar_pomodoro.cli.set_dnd", return_value=True) as mock_dnd_set:
+                ret = main(base_args + ["dnd", "--on", "--provider", "dunst"])
+                self.assertEqual(ret, 0)
+                mock_dnd_set.assert_called_once_with(True, "dunst")
+
+            with patch("waybar_pomodoro.cli.get_dnd_status", return_value=True) as mock_dnd_status:
+                ret = main(base_args + ["dnd", "--status", "--provider", "dunst"])
+                self.assertEqual(ret, 0)
+                mock_dnd_status.assert_called_once_with("dunst")
+
 
 if __name__ == "__main__":
     unittest.main()

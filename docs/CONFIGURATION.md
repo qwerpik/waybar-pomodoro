@@ -49,7 +49,7 @@ waybar-pomodoro --config ~/my-custom-pomodoro.json status
 
 ## 📋 Full Configuration Reference
 
-Below is the complete reference of all 21 configuration options supported in `config.json`:
+Below is the complete reference of all 27 configuration options supported in `config.json`:
 
 | Parameter | Type | Default | Valid Range / Choices | Description |
 | :--- | :--- | :--- | :--- | :--- |
@@ -82,6 +82,12 @@ Below is the complete reference of all 21 configuration options supported in `co
 | `menu_backend` | `string` | `"auto"` | `"auto"`, `"rofi"`, `"wofi"`, `"fuzzel"`, `"tofi"`, `"zenity"`, `"gtk"` | Backend engine used when launching `waybar-pomodoro menu`. |
 | `menu_custom_command` | `string` | `""` | Command string | Optional custom launcher command string (e.g. `"rofi -dmenu -theme ~/.config/rofi/pomodoro.rasi"`). |
 | `menu_presets` | `list[int]` | `[15, 25, 45, 60]` | List of ints (`1`–`1440`) | Quick duration presets shown in the right-click popup menu. |
+| `auto_dnd` | `bool` | `false` | `true`, `false` | Automatically silence desktop notifications (DND) during work sessions. |
+| `dnd_provider` | `string` | `"auto"` | `"auto"`, `"swaync"`, `"dunst"`, `"mako"` | Notification daemon provider for Focus Do Not Disturb. |
+| `idle_resume_notify` | `bool` | `true` | `true`, `false` | Send desktop notification when timer resumes after screen unlock. |
+| `hooks_enabled` | `bool` | `true` | `true`, `false` | Enable execution of visual and lifecycle event hooks. |
+| `hooks_dir` | `string` | `~/.config/waybar-pomodoro/hooks` | Valid path | Directory holding executable lifecycle hook scripts (`on_work_start.sh`, etc.). |
+| `hooks` | `dict[str, str]` | `{}` | Key-value pairs | Custom shell commands mapped to events (`work_start`, `break_start`, etc.). |
 | `state_file` | `string` | `~/.cache/waybar-pomodoro/state.json` | Valid path | Absolute or tilde path for the atomic state file. |
 | `stats_file` | `string` | `~/.local/share/waybar-pomodoro/stats.json` | Valid path | Absolute or tilde path for the focus history and streak database. |
 

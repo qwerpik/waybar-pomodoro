@@ -12,7 +12,10 @@ from pathlib import Path
 from typing import List, Optional
 
 from .config import PomodoroConfig, load_config, save_config
+from .dnd import get_dnd_status, set_dnd
+from .idle import handle_idle_pause, handle_idle_resume
 from .menu import MenuLauncher
+from .setup import run_setup
 from .streaming import run_stream
 from .timer import PomodoroTimer
 
@@ -218,6 +221,77 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the persistent Waybar streaming daemon (newline-delimited JSON)",
     )
 
+    # setup
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Generate or install compositor keybindings and Waybar module config",
+    )
+    setup_parser.add_argument(
+        "compositor",
+        nargs="?",
+        choices=["mangowm", "hyprland", "sway", "i3", "all"],
+        default="all",
+        help="Target compositor / window manager (default: all)",
+    )
+    setup_parser.add_argument(
+        "--print",
+        action="store_true",
+        help="Print configuration snippets to stdout (default)",
+    )
+    setup_parser.add_argument(
+        "--append",
+        action="store_true",
+        help="Safely append keybindings to target compositor config file",
+    )
+    setup_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Simulate appending without modifying files",
+    )
+
+    # idle-pause
+    subparsers.add_parser(
+        "idle-pause",
+        help="Pause running timer when screen locks or inactivity occurs",
+    )
+
+    # idle-resume
+    idle_resume_parser = subparsers.add_parser(
+        "idle-resume",
+        help="Resume timer when screen unlocks or user returns",
+    )
+    idle_resume_parser.add_argument(
+        "--no-notify",
+        action="store_true",
+        help="Do not show desktop notification upon resume",
+    )
+
+    # lock-hook
+    lock_hook_parser = subparsers.add_parser(
+        "lock-hook",
+        help="Screen lock hook integration (pause or resume)",
+    )
+    lock_hook_parser.add_argument(
+        "action",
+        choices=["pause", "resume"],
+        help="Action to perform on screen lock/unlock",
+    )
+
+    # dnd
+    dnd_parser = subparsers.add_parser("dnd", help="Manage Focus Do Not Disturb mode")
+    dnd_group = dnd_parser.add_mutually_exclusive_group()
+    dnd_group.add_argument("--on", action="store_true", help="Enable Do Not Disturb")
+    dnd_group.add_argument("--off", action="store_true", help="Disable Do Not Disturb")
+    dnd_group.add_argument(
+        "--status", action="store_true", help="Check current Do Not Disturb status"
+    )
+    dnd_parser.add_argument(
+        "--provider",
+        choices=["auto", "swaync", "dunst", "mako"],
+        default="auto",
+        help="Notification daemon provider",
+    )
+
     # config
     config_parser = subparsers.add_parser("config", help="Manage configuration")
     config_parser.add_argument(
@@ -357,6 +431,56 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if command == "stream":
         return run_stream(timer)
+
+    if command == "setup":
+        return run_setup(
+            compositor=getattr(args, "compositor", "all"),
+            dry_run=getattr(args, "dry_run", False),
+            print_only=getattr(args, "print", False),
+            append=getattr(args, "append", False),
+        )
+
+    if command == "idle-pause":
+        ok, msg = handle_idle_pause(timer)
+        print(msg)
+        return 0 if ok else 1
+
+    if command == "idle-resume":
+        notify = not getattr(args, "no_notify", False)
+        if not notify:
+            timer.config.idle_resume_notify = False
+        ok, msg = handle_idle_resume(timer, auto_resume=True)
+        print(msg)
+        return 0 if ok else 1
+
+    if command == "lock-hook":
+        action = getattr(args, "action", "pause")
+        if action == "pause":
+            ok, msg = handle_idle_pause(timer)
+        else:
+            ok, msg = handle_idle_resume(timer, auto_resume=True)
+        print(msg)
+        return 0 if ok else 1
+
+    if command == "dnd":
+        provider = getattr(args, "provider", "auto")
+        if getattr(args, "on", False):
+            ok = set_dnd(True, provider)
+            status_text = "enabled" if ok else "failed to enable"
+            print(f"Do Not Disturb {status_text} ({provider}).")
+            return 0 if ok else 1
+        elif getattr(args, "off", False):
+            ok = set_dnd(False, provider)
+            status_text = "disabled" if ok else "failed to disable"
+            print(f"Do Not Disturb {status_text} ({provider}).")
+            return 0 if ok else 1
+        else:
+            status = get_dnd_status(provider)
+            if status is None:
+                print(f"DND provider '{provider}' not active or unsupported.")
+                return 1
+            print("DND: on" if status else "DND: off")
+            return 0
 
     return 0
 
