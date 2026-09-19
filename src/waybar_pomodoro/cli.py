@@ -13,6 +13,7 @@ from typing import List, Optional
 
 from .config import PomodoroConfig, load_config, save_config
 from .menu import MenuLauncher
+from .streaming import run_stream
 from .timer import PomodoroTimer
 
 
@@ -211,6 +212,12 @@ def build_parser() -> argparse.ArgumentParser:
     # test-alert
     subparsers.add_parser("test-alert", help="Trigger a test desktop notification and audio chime")
 
+    # stream
+    subparsers.add_parser(
+        "stream",
+        help="Run the persistent Waybar streaming daemon (newline-delimited JSON)",
+    )
+
     # config
     config_parser = subparsers.add_parser("config", help="Manage configuration")
     config_parser.add_argument(
@@ -347,6 +354,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         timer.notifier.play_sound(timer.config.sound_work_end)
         print("Test alert sent.")
         return 0
+
+    if command == "stream":
+        return run_stream(timer)
 
     return 0
 

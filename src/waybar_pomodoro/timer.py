@@ -36,6 +36,25 @@ def render_progress_bar(percentage: int, accent_color: str, length: int = 12) ->
     return f"<span foreground='{accent_color}'>{filled}</span>"
 
 
+def _monotonic_clock_id() -> int:
+    """Best monotonic clock id; falls back when the platform lacks it."""
+    return getattr(time, "CLOCK_MONOTONIC", 1)
+
+
+def _boottime_clock_id() -> int:
+    """CLOCK_BOOTTIME keeps ticking across suspend; fallback disables drift math."""
+    return getattr(time, "CLOCK_BOOTTIME", _monotonic_clock_id())
+
+
+def _read_boot_id() -> str:
+    """Kernel boot id; changes on every reboot. Empty string when unreadable."""
+    try:
+        with open("/proc/sys/kernel/random/boot_id", "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
 class PomodoroTimer:
     def __init__(self, config: PomodoroConfig):
         self.config = config
@@ -58,6 +77,11 @@ class PomodoroTimer:
             "end_time": 0.0,
             "total_time": work_sec,
             "cycle": 1,
+            "paused_by_idle": False,
+            "dnd_active": False,
+            "start_monotonic": 0.0,
+            "start_boottime": 0.0,
+            "boot_id": "",
         }
 
     def _sanitize_state(self, raw: Dict[str, Any]) -> Dict[str, Any]:
@@ -90,6 +114,20 @@ class PomodoroTimer:
         except (ValueError, TypeError):
             cycle_val = 1
 
+        try:
+            start_mono = float(raw.get("start_monotonic", 0.0))
+        except (ValueError, TypeError):
+            start_mono = 0.0
+
+        try:
+            start_bt = float(raw.get("start_boottime", 0.0))
+        except (ValueError, TypeError):
+            start_bt = 0.0
+
+        boot_id_val = raw.get("boot_id", "")
+        if not isinstance(boot_id_val, str):
+            boot_id_val = ""
+
         return {
             "state": state_val,
             "phase": phase_val,
@@ -97,6 +135,11 @@ class PomodoroTimer:
             "end_time": end_t,
             "total_time": total_t,
             "cycle": cycle_val,
+            "paused_by_idle": bool(raw.get("paused_by_idle", False)),
+            "dnd_active": bool(raw.get("dnd_active", False)),
+            "start_monotonic": start_mono,
+            "start_boottime": start_bt,
+            "boot_id": boot_id_val,
         }
 
     def load_state(self) -> Dict[str, Any]:
@@ -181,6 +224,73 @@ class PomodoroTimer:
             except Exception:
                 pass
 
+    @staticmethod
+    def _stamp_running(state: Dict[str, Any]) -> None:
+        """Record monotonic/boot clocks at the moment a run (re)starts."""
+        try:
+            state["start_monotonic"] = time.clock_gettime(_monotonic_clock_id())
+            state["start_boottime"] = time.clock_gettime(_boottime_clock_id())
+        except (OSError, ValueError):
+            state["start_monotonic"] = 0.0
+            state["start_boottime"] = 0.0
+        state["boot_id"] = _read_boot_id()
+
+    @staticmethod
+    def _clear_run_stamps(state: Dict[str, Any]) -> None:
+        """Invalidate run clocks when the timer stops running."""
+        state["start_monotonic"] = 0.0
+        state["start_boottime"] = 0.0
+
+    @staticmethod
+    def _suspend_drift_seconds(state: Dict[str, Any]) -> float:
+        """Seconds the machine spent suspended since this run started.
+
+        CLOCK_BOOTTIME advances across suspend, CLOCK_MONOTONIC does not,
+        so their difference is the suspend time. Returns 0.0 when the
+        clocks are unavailable or no run was stamped.
+        """
+        mono_id = _monotonic_clock_id()
+        bt_id = _boottime_clock_id()
+        if mono_id == bt_id:
+            return 0.0
+        start_mono_raw = state.get("start_monotonic", 0.0)
+        start_bt_raw = state.get("start_boottime", 0.0)
+        try:
+            start_mono = float(start_mono_raw)
+            start_bt = float(start_bt_raw)
+        except (ValueError, TypeError):
+            return 0.0
+        if not start_mono or not start_bt:
+            return 0.0
+        try:
+            mono_now = time.clock_gettime(mono_id)
+            bt_now = time.clock_gettime(bt_id)
+        except (OSError, ValueError):
+            return 0.0
+        return max(0.0, (bt_now - start_bt) - (mono_now - start_mono))
+
+    def is_expired(self, state: Dict[str, Any], now: Optional[float] = None) -> bool:
+        """Pure expiry check with no side effects (no notify, no stats, no write)."""
+        if state.get("state") != "running":
+            return False
+        moment = time.time() if now is None else now
+        total = state.get("total_time", self.config.work_duration * 60)
+        end_time = state.get("end_time", 0.0)
+        try:
+            end_time = float(end_time)
+        except (ValueError, TypeError):
+            return False
+        # Backward clock jump guard (mirrors check_completion): not expired.
+        if end_time - moment > total + 60:
+            return False
+        return int(round(end_time - moment)) <= 0
+
+    def refresh(self) -> Dict[str, Any]:
+        """Run completion inside a locked transaction and return the fresh state."""
+        with self._transaction() as state:
+            self.check_completion(state)
+            return state
+
     def check_completion(self, state: Dict[str, Any]) -> bool:
         """
         Checks if the active timer has reached zero.
@@ -190,6 +300,12 @@ class PomodoroTimer:
         now = time.time()
         if state["state"] != "running":
             return False
+
+        # A reboot invalidates the monotonic/boot clocks stamped at run start;
+        # fall back to the wall-clock overdue heuristic below.
+        recorded_boot = state.get("boot_id", "")
+        if recorded_boot and recorded_boot != _read_boot_id():
+            self._clear_run_stamps(state)
 
         total_time = state.get("total_time", self.config.work_duration * 60)
         # Guard against backward system clock jump (e.g. NTP backwards step or DST adjustments)
@@ -204,6 +320,11 @@ class PomodoroTimer:
         overdue_seconds = abs(remaining)
         # If expired by more than 30 minutes, machine was likely suspended/asleep
         was_suspended = overdue_seconds > max(1800, state.get("total_time", 1800) * 2)
+        # Microsecond-accurate cross-check: BOOTTIME kept ticking while suspended.
+        # Any suspend longer than 2 minutes that covers the expiry means the
+        # session did not really complete in front of the user.
+        if not was_suspended and self._suspend_drift_seconds(state) > 120:
+            was_suspended = True
 
         max_cycles = max(1, self.config.cycles_before_long_break)
 
@@ -245,9 +366,11 @@ class PomodoroTimer:
             if self.config.auto_start_break and not was_suspended:
                 state["state"] = "running"
                 state["end_time"] = time.time() + state["time_remaining"]
+                self._stamp_running(state)
             else:
                 state["state"] = "idle"
                 state["end_time"] = 0.0
+                self._clear_run_stamps(state)
 
         else:  # Finished a break
             cycle = state.get("cycle", 1)
@@ -273,9 +396,11 @@ class PomodoroTimer:
             if self.config.auto_start_work and not was_suspended:
                 state["state"] = "running"
                 state["end_time"] = time.time() + state["time_remaining"]
+                self._stamp_running(state)
             else:
                 state["state"] = "idle"
                 state["end_time"] = 0.0
+                self._clear_run_stamps(state)
 
         return True
 
@@ -306,12 +431,15 @@ class PomodoroTimer:
                 state["state"] = "paused"
                 state["time_remaining"] = max(0, int(round(state["end_time"] - now)))
                 state["end_time"] = 0.0
+                self._clear_run_stamps(state)
             elif state["state"] == "paused":
                 state["state"] = "running"
                 state["end_time"] = now + state["time_remaining"]
+                self._stamp_running(state)
             else:  # idle
                 state["state"] = "running"
                 state["end_time"] = now + state["time_remaining"]
+                self._stamp_running(state)
 
         self.signal_waybar()
 
@@ -327,6 +455,7 @@ class PomodoroTimer:
 
             state["state"] = "running"
             state["end_time"] = now + state["time_remaining"]
+            self._stamp_running(state)
 
         self.signal_waybar()
 
@@ -338,6 +467,7 @@ class PomodoroTimer:
                 state["state"] = "paused"
                 state["time_remaining"] = max(0, int(round(state["end_time"] - now)))
                 state["end_time"] = 0.0
+                self._clear_run_stamps(state)
 
         self.signal_waybar()
 
@@ -348,6 +478,7 @@ class PomodoroTimer:
             if state["state"] == "paused":
                 state["state"] = "running"
                 state["end_time"] = now + state["time_remaining"]
+                self._stamp_running(state)
 
         self.signal_waybar()
 
@@ -364,6 +495,7 @@ class PomodoroTimer:
             state["end_time"] = 0.0
             state["total_time"] = work_sec
             state["cycle"] = 1
+            self._clear_run_stamps(state)
 
         self.signal_waybar()
 
@@ -392,6 +524,7 @@ class PomodoroTimer:
 
             if state["state"] == "running":
                 state["end_time"] = now + state["time_remaining"]
+                self._stamp_running(state)
 
         self.signal_waybar()
 
@@ -410,6 +543,7 @@ class PomodoroTimer:
                 state["end_time"] = now + new_rem
                 state["time_remaining"] = new_rem
                 state["total_time"] = max(new_rem, state.get("total_time", new_rem))
+                self._stamp_running(state)
             else:
                 current_rem = state.get("time_remaining", self.config.work_duration * 60)
                 new_rem = max(1, current_rem + delta_seconds)
@@ -430,9 +564,16 @@ class PomodoroTimer:
         return f"{mins:02d}:{secs:02d}"
 
     def get_status_payload(self) -> Dict[str, Any]:
-        with self._transaction() as state:
-            self.check_completion(state)
+        # Read-only fast path: every state write is an atomic rename, so an
+        # unlocked read never observes a torn file. Only an actual expiry
+        # takes the locked, side-effecting transaction path.
+        state = self.load_state()
+        if self.is_expired(state):
+            state = self.refresh()
+        return self.render_payload(state)
 
+    def render_payload(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Build the Waybar JSON payload from an in-memory state (no I/O)."""
         remaining, percentage = self.get_remaining_and_percentage(state)
         mins = remaining // 60
         secs = remaining % 60

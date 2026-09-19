@@ -5,13 +5,25 @@ Supports rofi, wofi, fuzzel, tofi, zenity, and PyGObject GTK3.
 
 from __future__ import annotations
 
+import importlib
 import re
 import shlex
 import shutil
 import subprocess
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from .timer import PomodoroTimer
+
+
+def _load_gtk() -> Any:
+    """Import PyGObject GTK3 dynamically (no static ignore comments needed).
+
+    Raises whatever importlib raises when PyGObject is missing; callers
+    already guard with try/except.
+    """
+    gi = cast(Any, importlib.import_module("gi"))
+    gi.require_version("Gtk", "3.0")
+    return cast(Any, importlib.import_module("gi.repository.Gtk"))
 
 
 def parse_menu_duration(value: str) -> Optional[int]:
@@ -46,10 +58,7 @@ class MenuLauncher:
             pref = preferred.strip().lower()
             if pref == "gtk":
                 try:
-                    import gi  # type: ignore
-
-                    gi.require_version("Gtk", "3.0")
-                    from gi.repository import Gtk  # type: ignore # noqa: F401
+                    _load_gtk()
 
                     return "gtk"
                 except Exception:
@@ -63,10 +72,7 @@ class MenuLauncher:
                 return candidate
 
         try:
-            import gi  # type: ignore
-
-            gi.require_version("Gtk", "3.0")
-            from gi.repository import Gtk  # type: ignore # noqa: F401
+            _load_gtk()
 
             return "gtk"
         except Exception:
@@ -80,10 +86,7 @@ class MenuLauncher:
         Lightweight fallback using PyGObject GTK3 when available.
         """
         try:
-            import gi  # type: ignore
-
-            gi.require_version("Gtk", "3.0")
-            from gi.repository import Gtk  # type: ignore
+            Gtk = _load_gtk()
         except Exception:
             return None
 
