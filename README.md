@@ -4,13 +4,14 @@
 
 <p align="center">
   <a href="https://github.com/qwerpik/waybar-pomodoro/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/qwerpik/waybar-pomodoro/test.yml?branch=main&label=CI&style=flat-square&logo=githubactions&logoColor=white&color=a6e3a1" alt="CI Status" /></a>
+  <a href="https://github.com/qwerpik/waybar-pomodoro/stargazers"><img src="https://img.shields.io/github/stars/qwerpik/waybar-pomodoro?style=flat-square&logo=github&color=fab387" alt="GitHub Stars" /></a>
+  <a href="https://github.com/qwerpik/waybar-pomodoro/releases"><img src="https://img.shields.io/github/v/release/qwerpik/waybar-pomodoro?style=flat-square&logo=github&color=89b4fa" alt="Release" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-f38ba8?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License: MIT" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.9+-89b4fa?style=flat-square&logo=python&logoColor=white" alt="Python 3.9+" /></a>
-  <a href="https://wayland.freedesktop.org/"><img src="https://img.shields.io/badge/Wayland-Native-fab387?style=flat-square&logo=wayland&logoColor=white" alt="Wayland Native" /></a>
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/Code%20Style-Ruff-cba6f7?style=flat-square&logo=ruff&logoColor=white" alt="Code style: ruff" /></a>
 </p>
 
-<h3 align="center">Zero-dependency Pomodoro timer for Waybar. Atomic, instant, distraction-free.</h3>
+<h3 align="center">Aesthetic, concurrency-hardened focus timer for Waybar.</h3>
 
 <p align="center">
   Pure Python stdlib only &nbsp;•&nbsp; <code>fcntl</code> + <code>fsync</code> race-free &nbsp;•&nbsp; <code>SIGRTMIN+8</code> instant refresh &nbsp;•&nbsp; Pango tooltips &nbsp;•&nbsp; stats &amp; heatmaps
@@ -101,6 +102,18 @@ stats --chart    # SVG in browser
 <a id="features"></a>
 ## ✨ Features
 
+| | Capability | What you get |
+| :--- | :--- | :--- |
+| ⚡ | **Zero dependencies** | Pure Python 3 stdlib. No venv, no pip. |
+| 🔒 | **Race-free** | `fcntl.flock` + atomic `fsync` writes. Wheel-scroll as fast as you want. |
+| 🎯 | **Instant** | `SIGRTMIN+8` refresh, Pango tooltip with progress bar, popup menu (rofi/wofi/fuzzel). |
+| 🖱️ | **Native bar UX** | Click toggle, right-click menu, middle-click skip, scroll `±1m`, `{alt}` + `format-icons`. |
+| 🟩 | **Study tracker** | Terminal heatmap (`stats --heatmap`) + SVG chart (`stats --chart`), streaks, JSON/CSV export. |
+| 🔔 | **No surprises** | Suspend-drift protection, `notify-send` + sound backends, 6 capsule themes. |
+
+<details>
+<summary><b>Full feature list (13 items)</b></summary>
+
 - **⚡ Zero External Dependencies**: Written in pure Python 3 using standard libraries. No bloated virtual environments or pip dependencies required.
 - **🔒 Race-Free Concurrency**: Process synchronization via POSIX advisory locks (`fcntl.flock`) and atomic file writes (`fsync` + rename) ensures rapid mouse wheel adjustments never drop increments or corrupt state files.
 - **🎯 Instant Waybar Updates**: Leverages Waybar's realtime signals (`SIGRTMIN+8`) for zero-latency UI updates on click or wheel scroll.
@@ -118,6 +131,8 @@ stats --chart    # SVG in browser
 - **📊 Focus Statistics & Streaks**: Persistently tracks completed Pomodoro sessions, focus time in minutes/hours, daily streaks (with day-rollover preservation), and JSON/CSV export.
 - **🎨 Theme Presets Included**: Ready-to-use CSS stylesheets for Minimal Black, Gruvbox, Catppuccin Mocha, Nord, Tokyo Night, and Dracula.
 
+</details>
+
 ---
 
 ## 📚 Documentation & Deep Dives
@@ -134,9 +149,17 @@ stats --chart    # SVG in browser
 <a id="installation"></a>
 ## 🚀 Installation
 
-### 🌐 Multi-Distribution Quick Matrix
+```bash
+git clone https://github.com/qwerpik/waybar-pomodoro.git
+cd waybar-pomodoro && ./install.sh
+```
 
-For comprehensive distribution-specific guides, PEP 668 mitigation, `$PATH` setup, and audio backends, see **[`docs/INSTALLATION.md`](docs/INSTALLATION.md)**.
+Debian/Ubuntu/Fedora (PEP 668 safe): `pipx install git+https://github.com/qwerpik/waybar-pomodoro.git` · Arch: `cd packaging && makepkg -si` · Nix: see docs.
+
+👉 Full distro guides, `$PATH`, audio backends: **[`docs/INSTALLATION.md`](docs/INSTALLATION.md)**.
+
+<details>
+<summary><b>All install methods</b></summary>
 
 | Distribution | Recommended Method | Command |
 | :--- | :--- | :--- |
@@ -145,8 +168,6 @@ For comprehensive distribution-specific guides, PEP 668 mitigation, `$PATH` setu
 | **Fedora** | `pipx` or `./install.sh` | `pipx install git+https://github.com/qwerpik/waybar-pomodoro.git` |
 | **NixOS / Nix** | Nix Flake / `nix-shell` | See [`docs/INSTALLATION.md`](docs/INSTALLATION.md#4-nixos--nix) |
 | **Any Linux (User)** | Standalone Installer | `./install.sh` |
-
----
 
 ### Option 1: Quick Install Script (Zero Dependencies)
 
@@ -196,10 +217,27 @@ programs.waybar-pomodoro.enable = true;
 ```
 *(See [`docs/INSTALLATION.md`](docs/INSTALLATION.md#4-nixos--nix) for full declarative configuration)*
 
+</details>
+
 ---
 
 <a id="waybar-configuration"></a>
 ## ⚙️ Waybar Configuration
+
+```jsonc
+"custom/pomodoro": {
+    "exec": "waybar-pomodoro status",
+    "on-click": "waybar-pomodoro toggle",
+    "on-click-right": "waybar-pomodoro menu",
+    "on-scroll-up": "waybar-pomodoro adjust +1m",
+    "interval": 1, "signal": 8
+}
+```
+
+👉 Full module, `format-icons`, Pango tooltip, popup menu, heatmap, CSS: **[`docs/CONFIGURATION.md`](docs/CONFIGURATION.md)** and **[`docs/CLI.md`](docs/CLI.md)**.
+
+<details>
+<summary><b>Full Waybar module + tooltip + menu + themes</b></summary>
 
 ### 1. Add module to `~/.config/waybar/config.jsonc`
 
@@ -373,7 +411,9 @@ Ready-to-use capsule pill stylesheets located in [`docs/themes/`](docs/themes/):
 | **Dracula** | `#ff5555` (Red) / `#50fa7b` (Green) | High contrast gothic | [`dracula.css`](docs/themes/dracula.css) |
 | **Minimal Black** | `#ffffff` / `#777777` | Pure stealth monochrome | [`minimal-black.css`](docs/themes/minimal-black.css) |
 
-### 4. Reload Waybar
+</details>
+
+### Reload Waybar
 
 ```bash
 pkill -SIGUSR2 waybar
@@ -478,21 +518,17 @@ The Waybar tooltip also displays today's completed session count and active stre
 
 ## 🧪 Running Tests & Quality Checks
 
-A comprehensive test suite and linters are configured:
-
 ```bash
-# Run unit tests
-make test
-
-# Run code style and lint checks
-make lint
-
-# Run static type checking
-make typecheck
-
-# Run all checks
-make check
+make check   # pytest + ruff + mypy --strict
 ```
+
+---
+
+## 🤝 Contributing
+
+1. Fork → branch → PR.
+2. Run `make check` before submitting.
+3. Docs live in `docs/` — frontpage stays short on purpose.
 
 ---
 
