@@ -1,140 +1,225 @@
-"""
-Unit tests for Focus Do Not Disturb (DND) integration.
-"""
-
-from __future__ import annotations
-
+import os
+import stat
+import tempfile
+import time
 import unittest
-from unittest.mock import patch
+from pathlib import Path
 
+from waybar_pomodoro import dnd
 from waybar_pomodoro.config import PomodoroConfig
-from waybar_pomodoro.dnd import (
-    DndManager,
-    detect_dnd_provider,
-    get_dnd_status,
-    set_dnd,
-)
+from waybar_pomodoro.timer import PomodoroTimer
+
+MAKOCTL = """#!/bin/sh
+# Fake makoctl: DND state in $FAKE_STATE_DIR/mako_dnd
+if [ "$1" = "mode" ] && [ $# -eq 1 ]; then
+    if [ -f "$FAKE_STATE_DIR/mako_dnd" ]; then echo "do-not-disturb"; else echo "default"; fi
+elif [ "$1" = "mode" ] && [ "$2" = "-a" ]; then
+    touch "$FAKE_STATE_DIR/mako_dnd"
+elif [ "$1" = "mode" ] && [ "$2" = "-r" ]; then
+    rm -f "$FAKE_STATE_DIR/mako_dnd"
+fi
+exit 0
+"""
+
+DUNSTCTL = """#!/bin/sh
+# Fake dunstctl: paused state in $FAKE_STATE_DIR/dunst_paused
+if [ "$1" = "is-paused" ]; then
+    if [ -f "$FAKE_STATE_DIR/dunst_paused" ]; then echo "true"; else echo "false"; fi
+elif [ "$1" = "set-paused" ] && [ "$2" = "true" ]; then
+    touch "$FAKE_STATE_DIR/dunst_paused"
+elif [ "$1" = "set-paused" ]; then
+    rm -f "$FAKE_STATE_DIR/dunst_paused"
+fi
+exit 0
+"""
+
+SWAYNC_CLIENT = """#!/bin/sh
+# Fake swaync-client: DND state in $FAKE_STATE_DIR/swaync_dnd
+if [ "$1" = "-D" ]; then
+    if [ -f "$FAKE_STATE_DIR/swaync_dnd" ]; then echo "true"; else echo "false"; fi
+elif [ "$1" = "--dnd-on" ]; then
+    touch "$FAKE_STATE_DIR/swaync_dnd"
+elif [ "$1" = "--dnd-off" ]; then
+    rm -f "$FAKE_STATE_DIR/swaync_dnd"
+elif [ "$1" = "-d" ]; then
+    if [ -f "$FAKE_STATE_DIR/swaync_dnd" ]; then
+        rm -f "$FAKE_STATE_DIR/swaync_dnd"
+    else
+        touch "$FAKE_STATE_DIR/swaync_dnd"
+    fi
+fi
+exit 0
+"""
+
+PGREP = """#!/bin/sh
+# Fake pgrep: pretend every queried daemon is running
+exit 0
+"""
 
 
-class TestDndManager(unittest.TestCase):
-    def test_detect_provider_explicit(self) -> None:
-        config = PomodoroConfig(dnd_provider="dunst")
-        mgr = DndManager(config)
-        with patch("waybar_pomodoro.dnd._which", return_value="/usr/bin/dunstctl"):
-            self.assertEqual(mgr.detect_provider(), "dunst")
+def _make_timer(tmpdir: str, **overrides) -> PomodoroTimer:
+    kwargs = dict(
+        work_duration=25,
+        short_break_duration=5,
+        long_break_duration=15,
+        cycles_before_long_break=4,
+        style="minimal",
+        sound_enabled=False,
+        notification_enabled=False,
+        waybar_signal=0,
+        state_file=str(Path(tmpdir) / "state.json"),
+        stats_file=str(Path(tmpdir) / "stats.json"),
+    )
+    kwargs.update(overrides)
+    return PomodoroTimer(PomodoroConfig(**kwargs))
 
-    def test_detect_provider_auto(self) -> None:
-        config = PomodoroConfig(dnd_provider="auto")
-        mgr = DndManager(config)
 
-        def mock_which(bin_name: str) -> str | None:
-            if bin_name == "dunstctl":
-                return "/usr/bin/dunstctl"
-            return None
+class FakeBinEnv(unittest.TestCase):
+    bins = ("makoctl", "dunstctl", "swaync-client", "pgrep")
 
-        def mock_proc(proc_name: str) -> bool:
-            return proc_name == "dunst"
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.bindir = Path(self.tmpdir.name) / "bin"
+        self.statedir = Path(self.tmpdir.name) / "daemons"
+        self.bindir.mkdir()
+        self.statedir.mkdir()
+        scripts = {
+            "makoctl": MAKOCTL,
+            "dunstctl": DUNSTCTL,
+            "swaync-client": SWAYNC_CLIENT,
+            "pgrep": PGREP,
+        }
+        for name in self.bins:
+            path = self.bindir / name
+            path.write_text(scripts[name], encoding="utf-8")
+            path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        self._old_path = os.environ.get("PATH", "")
+        self._old_fake_state = os.environ.get("FAKE_STATE_DIR")
+        os.environ["PATH"] = str(self.bindir) + os.pathsep + self._old_path
+        os.environ["FAKE_STATE_DIR"] = str(self.statedir)
+        dnd._which.cache_clear()
 
-        with (
-            patch("waybar_pomodoro.dnd._which", side_effect=mock_which),
-            patch("waybar_pomodoro.dnd._process_running", side_effect=mock_proc),
-        ):
-            self.assertEqual(mgr.detect_provider(), "dunst")
+    def tearDown(self):
+        os.environ["PATH"] = self._old_path
+        if self._old_fake_state is None:
+            os.environ.pop("FAKE_STATE_DIR", None)
+        else:
+            os.environ["FAKE_STATE_DIR"] = self._old_fake_state
+        dnd._which.cache_clear()
+        self.tmpdir.cleanup()
 
-    def test_detect_provider_none(self) -> None:
-        config = PomodoroConfig(dnd_provider="auto")
-        mgr = DndManager(config)
-        with (
-            patch("waybar_pomodoro.dnd._which", return_value=None),
-            patch("waybar_pomodoro.dnd._process_running", return_value=False),
-        ):
-            self.assertIsNone(mgr.detect_provider())
+    def marker(self, name: str) -> Path:
+        return self.statedir / name
 
-    def test_set_dnd_swaync(self) -> None:
-        config = PomodoroConfig(dnd_provider="swaync")
-        mgr = DndManager(config)
-        with (
-            patch.object(mgr, "detect_provider", return_value="swaync"),
-            patch("waybar_pomodoro.dnd._run", return_value=(0, "")),
-        ):
-            self.assertTrue(mgr.set_dnd(True))
-            self.assertTrue(mgr.set_dnd(False))
+    def wait_for(self, cond, timeout: float = 5.0) -> bool:
+        """Poll a condition; async Popen dispatch needs a grace period."""
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if cond():
+                return True
+            time.sleep(0.05)
+        return bool(cond())
 
-    def test_set_dnd_dunst(self) -> None:
-        config = PomodoroConfig(dnd_provider="dunst")
-        mgr = DndManager(config)
-        with (
-            patch.object(mgr, "detect_provider", return_value="dunst"),
-            patch("waybar_pomodoro.dnd._fire", return_value=True) as mock_fire,
-        ):
-            self.assertTrue(mgr.set_dnd(True))
-            mock_fire.assert_called_with(["dunstctl", "set-paused", "true"])
-            self.assertTrue(mgr.set_dnd(False))
-            mock_fire.assert_called_with(["dunstctl", "set-paused", "false"])
 
-    def test_set_dnd_mako(self) -> None:
-        config = PomodoroConfig(dnd_provider="mako")
-        mgr = DndManager(config)
-        with (
-            patch.object(mgr, "detect_provider", return_value="mako"),
-            patch("waybar_pomodoro.dnd._fire", return_value=True) as mock_fire,
-        ):
-            self.assertTrue(mgr.set_dnd(True))
-            mock_fire.assert_called_with(["makoctl", "mode", "-a", "do-not-disturb"])
-            self.assertTrue(mgr.set_dnd(False))
-            mock_fire.assert_called_with(["makoctl", "mode", "-r", "do-not-disturb"])
+class TestDetectProvider(FakeBinEnv):
+    bins = ("makoctl", "dunstctl", "swaync-client", "pgrep")
 
-    def test_is_dnd_enabled_swaync(self) -> None:
-        config = PomodoroConfig(dnd_provider="swaync")
-        mgr = DndManager(config)
-        with (
-            patch.object(mgr, "detect_provider", return_value="swaync"),
-            patch("waybar_pomodoro.dnd._run", return_value=(0, "true")),
-        ):
-            self.assertTrue(mgr.is_dnd_enabled())
+    def test_auto_prefers_swaync(self):
+        mgr = dnd.DndManager(PomodoroConfig())
+        self.assertEqual(mgr.detect_provider(), "swaync")
 
-        with (
-            patch.object(mgr, "detect_provider", return_value="swaync"),
-            patch("waybar_pomodoro.dnd._run", return_value=(0, "false")),
-        ):
-            self.assertFalse(mgr.is_dnd_enabled())
+    def test_explicit_provider(self):
+        mgr = dnd.DndManager(PomodoroConfig(dnd_provider="mako"))
+        self.assertEqual(mgr.detect_provider(), "mako")
 
-    def test_is_dnd_enabled_dunst(self) -> None:
-        config = PomodoroConfig(dnd_provider="dunst")
-        mgr = DndManager(config)
-        with (
-            patch.object(mgr, "detect_provider", return_value="dunst"),
-            patch("waybar_pomodoro.dnd._run", return_value=(0, "true")),
-        ):
-            self.assertTrue(mgr.is_dnd_enabled())
+    def test_no_daemons_returns_none(self):
+        os.environ["PATH"] = str(self.bindir)
+        for name in ("makoctl", "dunstctl", "swaync-client", "pgrep"):
+            (self.bindir / name).unlink()
+        dnd._which.cache_clear()
+        mgr = dnd.DndManager(PomodoroConfig())
+        self.assertIsNone(mgr.detect_provider())
+        self.assertIsNone(mgr.is_dnd_enabled())
+        self.assertFalse(mgr.set_dnd(True))
 
-    def test_is_dnd_enabled_mako(self) -> None:
-        config = PomodoroConfig(dnd_provider="mako")
-        mgr = DndManager(config)
-        with (
-            patch.object(mgr, "detect_provider", return_value="mako"),
-            patch("waybar_pomodoro.dnd._run", return_value=(0, "default\ndo-not-disturb")),
-        ):
-            self.assertTrue(mgr.is_dnd_enabled())
 
-        with (
-            patch.object(mgr, "detect_provider", return_value="mako"),
-            patch("waybar_pomodoro.dnd._run", return_value=(0, "default")),
-        ):
-            self.assertFalse(mgr.is_dnd_enabled())
+class TestMakoProvider(FakeBinEnv):
+    bins = ("makoctl", "pgrep")
 
-    def test_top_level_helpers(self) -> None:
-        with patch.object(DndManager, "set_dnd", return_value=True) as mock_set:
-            self.assertTrue(set_dnd(True, "dunst"))
-            mock_set.assert_called_once_with(True)
+    def test_status_roundtrip(self):
+        mgr = dnd.DndManager(PomodoroConfig(dnd_provider="mako"))
+        self.assertFalse(mgr.is_dnd_enabled())
+        self.assertTrue(mgr.set_dnd(True))
+        self.assertTrue(self.wait_for(lambda: self.marker("mako_dnd").exists()))
+        self.assertTrue(mgr.is_dnd_enabled())
+        self.assertTrue(mgr.set_dnd(False))
+        self.assertTrue(self.wait_for(lambda: not self.marker("mako_dnd").exists()))
+        self.assertFalse(mgr.is_dnd_enabled())
 
-        with patch.object(DndManager, "is_dnd_enabled", return_value=False) as mock_status:
-            self.assertFalse(get_dnd_status("dunst"))
-            mock_status.assert_called_once()
 
-        with patch.object(DndManager, "detect_provider", return_value="mako") as mock_det:
-            self.assertEqual(detect_dnd_provider(), "mako")
-            mock_det.assert_called_once()
+class TestDunstProvider(FakeBinEnv):
+    bins = ("dunstctl", "pgrep")
+
+    def test_status_roundtrip(self):
+        mgr = dnd.DndManager(PomodoroConfig(dnd_provider="dunst"))
+        self.assertEqual(mgr.detect_provider(), "dunst")
+        self.assertFalse(mgr.is_dnd_enabled())
+        mgr.set_dnd(True)
+        self.assertTrue(self.wait_for(lambda: mgr.is_dnd_enabled()))
+        mgr.set_dnd(False)
+        self.assertTrue(self.wait_for(lambda: mgr.is_dnd_enabled() is False))
+
+
+class TestSwayncProvider(FakeBinEnv):
+    bins = ("swaync-client", "pgrep")
+
+    def test_status_roundtrip(self):
+        mgr = dnd.DndManager(PomodoroConfig(dnd_provider="swaync"))
+        self.assertFalse(mgr.is_dnd_enabled())
+        self.assertTrue(mgr.set_dnd(True))
+        self.assertTrue(self.wait_for(lambda: mgr.is_dnd_enabled()))
+        self.assertTrue(mgr.set_dnd(False))
+        self.assertTrue(self.wait_for(lambda: mgr.is_dnd_enabled() is False))
+
+
+class TestTimerDndIntegration(FakeBinEnv):
+    bins = ("makoctl", "pgrep")
+
+    def test_work_claims_dnd_break_releases(self):
+        timer = _make_timer(self.tmpdir.name, auto_dnd=True, dnd_provider="mako")
+        timer.start()
+        state = timer.load_state()
+        self.assertTrue(state["dnd_active"])
+        self.assertTrue(self.wait_for(lambda: self.marker("mako_dnd").exists()))
+        timer.reset()
+        state = timer.load_state()
+        self.assertFalse(state["dnd_active"])
+        self.assertTrue(self.wait_for(lambda: not self.marker("mako_dnd").exists()))
+
+    def test_users_own_dnd_is_never_claimed_nor_released(self):
+        self.marker("mako_dnd").touch()
+        timer = _make_timer(self.tmpdir.name, auto_dnd=True, dnd_provider="mako")
+        timer.start()
+        state = timer.load_state()
+        self.assertFalse(state["dnd_active"])
+        timer.reset()
+        # Still on: it was never ours to turn off.
+        self.assertTrue(self.marker("mako_dnd").exists())
+
+    def test_pause_keeps_dnd(self):
+        timer = _make_timer(self.tmpdir.name, auto_dnd=True, dnd_provider="mako")
+        timer.start()
+        self.assertTrue(self.wait_for(lambda: self.marker("mako_dnd").exists()))
+        timer.pause()
+        state = timer.load_state()
+        self.assertTrue(state["dnd_active"])
+        self.assertTrue(self.marker("mako_dnd").exists())
+
+    def test_auto_dnd_off_is_total_noop(self):
+        timer = _make_timer(self.tmpdir.name)
+        timer.start()
+        self.assertFalse(timer.load_state()["dnd_active"])
+        self.assertFalse(self.marker("mako_dnd").exists())
 
 
 if __name__ == "__main__":

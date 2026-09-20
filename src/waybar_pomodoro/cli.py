@@ -265,6 +265,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not show desktop notification upon resume",
     )
+    idle_resume_parser.add_argument(
+        "--mode",
+        choices=["prompt", "auto", "keep"],
+        default=None,
+        help="Override idle_resume_mode from config for this call",
+    )
 
     # lock-hook
     lock_hook_parser = subparsers.add_parser(
@@ -275,6 +281,12 @@ def build_parser() -> argparse.ArgumentParser:
         "action",
         choices=["pause", "resume"],
         help="Action to perform on screen lock/unlock",
+    )
+    lock_hook_parser.add_argument(
+        "--mode",
+        choices=["prompt", "auto", "keep"],
+        default=None,
+        help="Override idle_resume_mode from config for resume",
     )
 
     # dnd
@@ -441,26 +453,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
 
     if command == "idle-pause":
-        ok, msg = handle_idle_pause(timer)
-        print(msg)
-        return 0 if ok else 1
+        return handle_idle_pause(timer, config)
 
     if command == "idle-resume":
-        notify = not getattr(args, "no_notify", False)
-        if not notify:
-            timer.config.idle_resume_notify = False
-        ok, msg = handle_idle_resume(timer, auto_resume=True)
-        print(msg)
-        return 0 if ok else 1
+        if getattr(args, "no_notify", False):
+            config.idle_resume_notify = False
+        if getattr(args, "mode", None):
+            config.idle_resume_mode = args.mode
+        return handle_idle_resume(timer, config, interactive=True)
 
     if command == "lock-hook":
         action = getattr(args, "action", "pause")
         if action == "pause":
-            ok, msg = handle_idle_pause(timer)
-        else:
-            ok, msg = handle_idle_resume(timer, auto_resume=True)
-        print(msg)
-        return 0 if ok else 1
+            return handle_idle_pause(timer, config)
+        if getattr(args, "mode", None):
+            config.idle_resume_mode = args.mode
+        return handle_idle_resume(timer, config, interactive=True)
 
     if command == "dnd":
         provider = getattr(args, "provider", "auto")

@@ -238,22 +238,45 @@ class PomodoroTimer:
         )
 
     def _apply_dnd(self, state: Dict[str, Any]) -> None:
-        """Enables or disables Do Not Disturb mode based on current state."""
+        """Align system DND with the timer phase (no-op unless auto_dnd).
+
+        Claims DND only when the desktop doesn't already have it on, so a
+        user-muted desktop is never un-muted on break. Paused sessions keep
+        whatever DND state they have (the focus session still owns the screen).
+        """
         if not self.config.auto_dnd:
             return
-        from .dnd import set_dnd
-
         curr_state = state.get("state")
         curr_phase = state.get("phase")
-        should_dnd = curr_state == "running" and curr_phase == "work"
-        is_dnd = state.get("dnd_active", False)
-
-        if should_dnd and not is_dnd:
-            if set_dnd(True, self.config.dnd_provider):
-                state["dnd_active"] = True
-        elif not should_dnd and is_dnd:
-            set_dnd(False, self.config.dnd_provider)
-            state["dnd_active"] = False
+        try:
+            manager = DndManager(self.config)
+        except Exception:
+            return
+        if curr_state == "running" and curr_phase == "work":
+            if state.get("dnd_active"):
+                return
+            try:
+                already_on = manager.is_dnd_enabled()
+            except Exception:
+                already_on = None
+            if already_on is True:
+                return
+            try:
+                if manager.set_dnd(True):
+                    state["dnd_active"] = True
+            except Exception:
+                pass
+        elif curr_state == "idle" or (
+            curr_state == "running" and curr_phase in ("short_break", "long_break")
+        ):
+            if not state.get("dnd_active"):
+                return
+            try:
+                manager.set_dnd(False)
+            except Exception:
+                pass
+            finally:
+                state["dnd_active"] = False
 
     @staticmethod
     def _stamp_running(state: Dict[str, Any]) -> None:
@@ -321,47 +344,6 @@ class PomodoroTimer:
         with self._transaction() as state:
             self.check_completion(state)
             return state
-
-    def _sync_dnd(self, state: Dict[str, Any]) -> None:
-        """Align system DND with the timer phase (no-op unless auto_dnd).
-
-        Claims DND only when the system doesn't already have it on, so a
-        user-muted desktop is never un-muted on break. Paused sessions keep
-        whatever DND state they have.
-        """
-        if not self.config.auto_dnd:
-            return
-        curr_state = state.get("state")
-        curr_phase = state.get("phase")
-        try:
-            manager = DndManager(self.config)
-        except Exception:
-            return
-        if curr_state == "running" and curr_phase == "work":
-            if state.get("dnd_active"):
-                return
-            try:
-                already_on = manager.is_dnd_enabled()
-            except Exception:
-                already_on = None
-            if already_on is True:
-                return
-            try:
-                if manager.set_dnd(True):
-                    state["dnd_active"] = True
-            except Exception:
-                pass
-        elif curr_state == "idle" or (
-            curr_state == "running" and curr_phase in ("short_break", "long_break")
-        ):
-            if not state.get("dnd_active"):
-                return
-            try:
-                manager.set_dnd(False)
-            except Exception:
-                pass
-            finally:
-                state["dnd_active"] = False
 
     def check_completion(self, state: Dict[str, Any]) -> bool:
         """
