@@ -1,12 +1,21 @@
 import fcntl
+import io
+import json
+import os
+import select
+import signal
 import tempfile
+import threading
 import time
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 from waybar_pomodoro.config import PomodoroConfig
 from waybar_pomodoro.streaming import (
     StreamAlreadyRunning,
+    _neutralize_stdout,
     next_tick_delay,
     run_stream,
     single_instance,
@@ -160,6 +169,90 @@ class TestDriftDetection(unittest.TestCase):
         state = self.timer.load_state()
         self.assertEqual(state["start_monotonic"], 0.0)
         self.assertEqual(state["start_boottime"], 0.0)
+
+
+class TestStreamLoopInProcess(unittest.TestCase):
+    """Drive the real daemon loop in-process: toggle wakes it, SIGTERM stops it."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.timer = _make_timer(self.tmpdir.name)
+        self.timer.reset()
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def test_loop_reacts_and_shuts_down(self):
+        stopper = threading.Timer(
+            2.5, lambda: os.kill(os.getpid(), signal.SIGTERM)
+        )
+        toggler = threading.Timer(0.5, self.timer.toggle)
+        buf = io.StringIO()
+        stopper.start()
+        toggler.start()
+        try:
+            with redirect_stdout(buf):
+                code = run_stream(self.timer)
+        finally:
+            stopper.cancel()
+            toggler.cancel()
+        self.assertEqual(code, 0)
+        lines = [line for line in buf.getvalue().split("\n") if line.strip()]
+        self.assertGreaterEqual(len(lines), 2)
+        payloads = [json.loads(line) for line in lines]
+        for payload in payloads:
+            self.assertEqual(
+                set(("text", "alt", "tooltip", "class", "percentage")), set(payload)
+            )
+        self.assertTrue(any(p["alt"] == "work" for p in payloads))
+
+    def test_broken_stdout_exits_zero(self):
+        class BrokenOut(io.StringIO):
+            def write(self, _s):
+                raise BrokenPipeError(32, "Broken pipe")
+
+            def flush(self):
+                raise BrokenPipeError(32, "Broken pipe")
+
+        self.timer.start()
+        with redirect_stdout(BrokenOut()):
+            code = run_stream(self.timer)
+        self.assertEqual(code, 0)
+
+
+class TestStreamFailureBranches(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.timer = _make_timer(self.tmpdir.name)
+        self.timer.reset()
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def test_lock_open_failure_returns_one(self):
+        with patch("builtins.open", side_effect=OSError("denied")):
+            self.assertEqual(run_stream(self.timer), 1)
+
+    def test_inotify_unavailable_returns_one(self):
+        with patch.object(InotifyWatcher, "start", side_effect=OSError("no inotify")):
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(run_stream(self.timer), 1)
+
+    def test_select_error_breaks_loop_cleanly(self):
+        with patch.object(select, "select", side_effect=OSError("bad fd")):
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(run_stream(self.timer), 0)
+
+    def test_neutralize_stdout_variants(self):
+        with redirect_stdout(io.StringIO()):
+            _neutralize_stdout()  # healthy path: no-op
+        with redirect_stdout(io.StringIO()):
+            with patch.object(os, "open", side_effect=OSError("no devnull")):
+                _neutralize_stdout()
+        with redirect_stdout(io.StringIO()):
+            with patch.object(os, "dup2", side_effect=OSError("bad fd")):
+                with patch.object(os, "close", side_effect=OSError("bad close")):
+                    _neutralize_stdout()
 
 
 if __name__ == "__main__":

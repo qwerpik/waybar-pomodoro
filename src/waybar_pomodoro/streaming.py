@@ -93,7 +93,31 @@ def _emit(payload: Dict[str, Any]) -> bool:
         sys.stdout.flush()
         return True
     except BrokenPipeError:
+        _neutralize_stdout()
         return False
+
+
+def _neutralize_stdout() -> None:
+    """Point stdout at /dev/null so interpreter shutdown flush exits 0, not 120."""
+    try:
+        sys.stdout.flush()
+    except BrokenPipeError:
+        pass
+    except Exception:
+        return
+    try:
+        devnull = os.open(os.devnull, os.O_WRONLY)
+    except OSError:
+        return
+    try:
+        os.dup2(devnull, sys.stdout.fileno())
+    except OSError:
+        pass
+    finally:
+        try:
+            os.close(devnull)
+        except OSError:
+            pass
 
 
 def run_stream(timer: PomodoroTimer) -> int:

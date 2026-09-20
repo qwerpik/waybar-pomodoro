@@ -38,10 +38,36 @@ class PomodoroStats:
                 with open(self.stats_file, "r", encoding="utf-8") as f:
                     content = json.load(f)
                     if isinstance(content, dict):
-                        return {**default, **content}
+                        return self._sanitize_data({**default, **content})
             except Exception:
                 pass
         return default
+
+    @staticmethod
+    def _sanitize_data(data: Dict[str, Any]) -> Dict[str, Any]:
+        """Drop corrupt shapes so a damaged stats file degrades to empty stats."""
+        days = data.get("days")
+        if not isinstance(days, dict):
+            data["days"] = {}
+        else:
+            clean_days = {}
+            for day_key, entry in days.items():
+                if not isinstance(entry, dict):
+                    continue
+                try:
+                    clean_days[day_key] = {
+                        "completed_sessions": max(0, int(entry.get("completed_sessions", 0))),
+                        "focus_seconds": max(0, int(entry.get("focus_seconds", 0))),
+                    }
+                except (ValueError, TypeError):
+                    continue
+            data["days"] = clean_days
+        for num_key in ("total_completed", "total_focus_seconds"):
+            try:
+                data[num_key] = max(0, int(data.get(num_key, 0)))
+            except (ValueError, TypeError):
+                data[num_key] = 0
+        return data
 
     def _save(self) -> None:
         self.stats_file.parent.mkdir(parents=True, exist_ok=True)

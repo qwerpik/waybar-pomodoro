@@ -11,6 +11,7 @@ from __future__ import annotations
 import functools
 import shutil
 import subprocess
+import time
 from typing import Dict, List, Optional, Tuple
 
 from .config import PomodoroConfig
@@ -110,8 +111,14 @@ def _swaync_set(enabled: bool) -> bool:
     if current is None or current == enabled:
         return current == enabled
     _fire(["swaync-client", "-d"])
-    rechecked = _swaync_status()
-    return rechecked == enabled
+    # The toggle is async; poll briefly for the state to settle.
+    deadline = time.time() + 2.0
+    while time.time() < deadline:
+        rechecked = _swaync_status()
+        if rechecked == enabled:
+            return True
+        time.sleep(0.05)
+    return False
 
 
 def _dunst_status() -> Optional[bool]:
@@ -135,9 +142,7 @@ def _mako_status() -> Optional[bool]:
     if rc != 0:
         return None
     modes = {line.strip() for line in out.splitlines() if line.strip()}
-    if "do-not-disturb" in modes:
-        return True
-    return False if modes else None
+    return "do-not-disturb" in modes
 
 
 def _mako_set(enabled: bool) -> bool:

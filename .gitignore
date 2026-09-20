@@ -22,6 +22,7 @@ env/
 .ruff_cache/
 .coverage
 htmlcov/
+htmlcov/
 *.tmp
 *.log
 *.lock
