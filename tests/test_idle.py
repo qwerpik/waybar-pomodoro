@@ -166,9 +166,7 @@ class TestIdleDndUntouched(IdleTestCase):
         bindir.mkdir()
         makoctl = bindir / "makoctl"
         makoctl.write_text(
-            "#!/bin/sh\n"
-            'if [ "$1" = "mode" ] && [ $# -eq 1 ]; then echo "default"; fi\n'
-            "exit 0\n",
+            '#!/bin/sh\nif [ "$1" = "mode" ] && [ $# -eq 1 ]; then echo "default"; fi\nexit 0\n',
             encoding="utf-8",
         )
         makoctl.chmod(makoctl.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)

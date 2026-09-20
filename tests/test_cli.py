@@ -212,24 +212,18 @@ class TestCLI(unittest.TestCase):
                 )
 
             # 16. idle-pause & idle-resume
-            with patch(
-                "waybar_pomodoro.cli.handle_idle_pause", return_value=0
-            ) as mock_ip:
+            with patch("waybar_pomodoro.cli.handle_idle_pause", return_value=0) as mock_ip:
                 ret = main(base_args + ["idle-pause"])
                 self.assertEqual(ret, 0)
                 mock_ip.assert_called_once()
 
-            with patch(
-                "waybar_pomodoro.cli.handle_idle_resume", return_value=0
-            ) as mock_ir:
+            with patch("waybar_pomodoro.cli.handle_idle_resume", return_value=0) as mock_ir:
                 ret = main(base_args + ["idle-resume", "--no-notify"])
                 self.assertEqual(ret, 0)
                 mock_ir.assert_called_once()
 
             # 17. lock-hook
-            with patch(
-                "waybar_pomodoro.cli.handle_idle_pause", return_value=0
-            ) as mock_lh:
+            with patch("waybar_pomodoro.cli.handle_idle_pause", return_value=0) as mock_lh:
                 ret = main(base_args + ["lock-hook", "pause"])
                 self.assertEqual(ret, 0)
                 mock_lh.assert_called_once()

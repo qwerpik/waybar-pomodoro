@@ -75,9 +75,7 @@ class TestStreamDaemonLifecycle(unittest.TestCase):
         rest = proc.stdout.read().decode()
         for line in (first + rest).strip().split("\n"):
             payload = json.loads(line)
-            self.assertEqual(
-                set(("text", "alt", "tooltip", "class", "percentage")), set(payload)
-            )
+            self.assertEqual(set(("text", "alt", "tooltip", "class", "percentage")), set(payload))
 
     def test_daemon_exits_quietly_on_broken_pipe(self):
         self._cli("toggle")  # running: daemon writes every second

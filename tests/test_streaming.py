@@ -183,9 +183,7 @@ class TestStreamLoopInProcess(unittest.TestCase):
         self.tmpdir.cleanup()
 
     def test_loop_reacts_and_shuts_down(self):
-        stopper = threading.Timer(
-            2.5, lambda: os.kill(os.getpid(), signal.SIGTERM)
-        )
+        stopper = threading.Timer(2.5, lambda: os.kill(os.getpid(), signal.SIGTERM))
         toggler = threading.Timer(0.5, self.timer.toggle)
         buf = io.StringIO()
         stopper.start()
@@ -201,9 +199,7 @@ class TestStreamLoopInProcess(unittest.TestCase):
         self.assertGreaterEqual(len(lines), 2)
         payloads = [json.loads(line) for line in lines]
         for payload in payloads:
-            self.assertEqual(
-                set(("text", "alt", "tooltip", "class", "percentage")), set(payload)
-            )
+            self.assertEqual(set(("text", "alt", "tooltip", "class", "percentage")), set(payload))
         self.assertTrue(any(p["alt"] == "work" for p in payloads))
 
     def test_broken_stdout_exits_zero(self):

@@ -274,7 +274,7 @@ class TestDndEdges(unittest.TestCase):
                     "#!/bin/sh\n"
                     'if [ "$1" = "-D" ]; then\n'
                     '  if [ -f "$FAKE_STATE_DIR/d" ]; then echo true; else echo false; fi\n'
-                    "elif [ \"$1\" = \"--dnd-on\" ] || [ \"$1\" = \"--dnd-off\" ]; then\n"
+                    'elif [ "$1" = "--dnd-on" ] || [ "$1" = "--dnd-off" ]; then\n'
                     "  echo unsupported >&2; exit 1\n"
                     'elif [ "$1" = "-d" ]; then\n'
                     '  if [ -f "$FAKE_STATE_DIR/d" ]; then rm -f "$FAKE_STATE_DIR/d";'
@@ -402,9 +402,7 @@ class TestNotifierCommands(unittest.TestCase):
     def test_play_sound_without_player_or_file(self):
         notifier = Notifier(sound_enabled=True)
         with patch("shutil.which", return_value=None):
-            with patch.object(
-                Notifier, "_resolve_sound_path", return_value=None
-            ):
+            with patch.object(Notifier, "_resolve_sound_path", return_value=None):
                 # Falls back to terminal bell; must not raise.
                 with patch("sys.stdout"):
                     notifier.play_sound("/nonexistent/fake.oga")

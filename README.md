@@ -1,34 +1,36 @@
-<p align="center">
-  <img src="assets/banner.png" alt="waybar-pomodoro banner" width="100%" />
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://github.com/qwerpik/waybar-pomodoro/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/qwerpik/waybar-pomodoro/test.yml?branch=main&label=CI&style=flat-square&logo=githubactions&logoColor=white&color=a6e3a1" alt="CI Status" /></a>
-  <a href="https://github.com/qwerpik/waybar-pomodoro/stargazers"><img src="https://img.shields.io/github/stars/qwerpik/waybar-pomodoro?style=flat-square&logo=github&color=fab387" alt="GitHub Stars" /></a>
-  <a href="https://github.com/qwerpik/waybar-pomodoro/releases"><img src="https://img.shields.io/github/v/release/qwerpik/waybar-pomodoro?style=flat-square&logo=github&color=89b4fa" alt="Release" /></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-f38ba8?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License: MIT" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.9+-89b4fa?style=flat-square&logo=python&logoColor=white" alt="Python 3.9+" /></a>
-  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/Code%20Style-Ruff-cba6f7?style=flat-square&logo=ruff&logoColor=white" alt="Code style: ruff" /></a>
-</p>
+<img src="assets/banner.png" alt="waybar-pomodoro banner" width="100%" />
 
-<h3 align="center">Aesthetic, concurrency-hardened focus timer for Waybar.</h3>
+# Waybar Pomodoro
 
-<p align="center">
-  Pure Python stdlib only &nbsp;•&nbsp; 0% CPU streaming &nbsp;•&nbsp; <code>fcntl</code> + <code>fsync</code> race-free &nbsp;•&nbsp; Screen lock &amp; Focus DND &nbsp;•&nbsp; MangoWM / Hyprland / Sway / i3
-</p>
+**Aesthetic, zero-CPU streaming focus timer for Waybar and Wayland compositors.**
 
-<p align="center">
-  <a href="#why">Why</a> •
-  <a href="#try-in-30-seconds">Quickstart</a> •
-  <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#waybar-configuration">Waybar Config</a> •
-  <a href="docs/INTEGRATIONS.md">Integrations</a> •
-  <a href="#theme-presets">Themes</a> •
-  <a href="docs/CLI.md">CLI</a> •
-  <a href="docs/CONFIGURATION.md">Config</a> •
-  <a href="docs/ARTICLE.md">Architecture</a>
-</p>
+<br />
+
+[![Star this repo](https://img.shields.io/github/stars/qwerpik/waybar-pomodoro?style=for-the-badge&logo=github&label=%E2%AD%90%20Star%20this%20repo&color=yellow)](https://github.com/qwerpik/waybar-pomodoro/stargazers)
+
+<br />
+
+[![CI Status](https://img.shields.io/github/actions/workflow/status/qwerpik/waybar-pomodoro/test.yml?branch=main&label=CI&style=for-the-badge&logo=githubactions&logoColor=white&color=a6e3a1)](https://github.com/qwerpik/waybar-pomodoro/actions/workflows/test.yml)
+&nbsp;
+[![Release](https://img.shields.io/github/v/release/qwerpik/waybar-pomodoro?style=for-the-badge&logo=github&color=89b4fa)](https://github.com/qwerpik/waybar-pomodoro/releases)
+&nbsp;
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-89b4fa?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+&nbsp;
+[![License: MIT](https://img.shields.io/badge/License-MIT-f38ba8?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](https://opensource.org/licenses/MIT)
+&nbsp;
+[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
+
+---
+
+Stay in deep focus without leaving your keyboard or cluttering your workspace. `waybar-pomodoro` integrates directly into your Waybar status bar with zero background CPU overhead, atomic race-free file locks, Focus DND silencing, and interactive mouse-wheel adjustments.
+
+[Quickstart](#quickstart) • [How It Works](#how-it-works) • [Features](#features) • [Installation](#installation) • [Waybar Config](#waybar-configuration) • [Themes](#theme-presets) • [Docs](docs/) • [Contributing](#contributing)
+
+</div>
+
+<br />
 
 <a id="why"></a>
 <table>
@@ -55,6 +57,7 @@ Auto-pause on screen lock, Focus DND, lifecycle event hooks, popup menu.
 </table>
 
 <a id="try-in-30-seconds"></a>
+<a id="quickstart"></a>
 > [!TIP]
 > **Try in 30 seconds**
 > ```bash
@@ -64,6 +67,7 @@ Auto-pause on screen lock, Focus DND, lifecycle event hooks, popup menu.
 > waybar-pomodoro toggle && waybar-pomodoro status --heatmap
 > ```
 
+<a id="how-it-works"></a>
 <table>
 <tr>
 <td valign="top" width="50%">
@@ -121,7 +125,7 @@ stats --chart    # SVG in browser
 
 - **⚡ Zero External Dependencies**: Written in pure Python 3 using standard libraries. No bloated virtual environments or pip dependencies required.
 - **🔒 Race-Free Concurrency**: Process synchronization via POSIX advisory locks (`fcntl.flock`) and atomic file writes (`fsync` + rename) ensures rapid mouse wheel adjustments never drop increments or corrupt state files.
-- **🎯 Instant Waybar Updates**: Leverages Waybar's realtime signals (`SIGRTMIN+8`) for zero-latency UI updates on click or wheel scroll.
+- **🎯 Instant Waybar Updates**: Uses Waybar's realtime signals (`SIGRTMIN+8`) for zero-latency UI updates on click or wheel scroll.
 - **🖱️ Full Mouse & Wheel Interaction**:
   - **Left Click**: Start / Pause / Resume
   - **Right Click**: Open Interactive Popup Menu (`waybar-pomodoro menu`) or Reset
@@ -312,7 +316,7 @@ Hovering over the module in Waybar renders a rich Pango-formatted tooltip with a
 
 ### 3. Interactive Right-Click Popup Menu
 
-Right-clicking the module opens a sleek popup launcher menu (`waybar-pomodoro menu`) that integrates automatically with your desktop theme. It auto-detects `rofi`, `wofi`, `fuzzel`, `tofi`, `zenity`, or `gtk`, working seamlessly across all Wayland compositors:
+Right-clicking the module opens a sleek popup launcher menu (`waybar-pomodoro menu`) that integrates automatically with your desktop theme. It auto-detects `rofi`, `wofi`, `fuzzel`, `tofi`, `zenity`, or `gtk` across all Wayland compositors:
 
 - **Playback Controls**: Toggle, Pause, Resume, Skip Phase, Reset, or Stop.
 - **Quick Duration Presets**: `⚡ 15m Sprint`, `🍅 25m Classic`, `🎯 45m Deep Work`, `🏆 60m Marathon`.
@@ -527,11 +531,16 @@ make check   # pytest + ruff + mypy --strict
 
 ---
 
+<a id="contributing"></a>
 ## 🤝 Contributing
 
-1. Fork → branch → PR.
-2. Run `make check` before submitting.
-3. Docs live in `docs/` — frontpage stays short on purpose.
+Contributions, bug reports, and theme submissions are warmly welcome!
+
+1. Fork the repo and create your branch (`git checkout -b feature/my-feature`).
+2. Run `make check` to verify tests, formatting, and strict type checks.
+3. Submit a Pull Request.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for full guidelines.
 
 ---
 
@@ -541,7 +550,18 @@ make check   # pytest + ruff + mypy --strict
 
 ---
 
-## 📄 License
+<div align="center">
 
-MIT License © 2026 [qwerpik](https://github.com/qwerpik).  
-See [LICENSE](LICENSE) for details.
+Built by [qwerpik](https://github.com/qwerpik)
+
+<br />
+
+**If this project helps you stay productive, give it a star!**
+
+[![Star this repo](https://img.shields.io/github/stars/qwerpik/waybar-pomodoro?style=for-the-badge&logo=github&label=%E2%AD%90%20Star%20this%20repo&color=yellow)](https://github.com/qwerpik/waybar-pomodoro/stargazers)
+
+<br />
+
+Distributed under the [MIT License](LICENSE) © 2026 [qwerpik](https://github.com/qwerpik).
+
+</div>
