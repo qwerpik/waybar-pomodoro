@@ -5,6 +5,7 @@ Supports MangoWM, Hyprland, Sway, and i3.
 
 from __future__ import annotations
 
+import os
 import shutil
 import time
 from pathlib import Path
@@ -120,7 +121,12 @@ def append_keybindings(config_path: Path, snippet: str, dry_run: bool = False) -
     if dry_run:
         return True, f"[dry-run] Would update {config_path} with keybindings."
 
-    backup_path = config_path.with_suffix(f".bak.{int(time.time())}")
+    stamp = f".bak.{int(time.time())}.{os.getpid()}"
+    backup_path = config_path.with_suffix(stamp)
+    counter = 1
+    while backup_path.exists():
+        counter += 1
+        backup_path = config_path.with_suffix(f"{stamp}.{counter}")
     shutil.copy2(config_path, backup_path)
     config_path.write_text(new_content, encoding="utf-8")
     return True, f"Updated {config_path} (backup saved to {backup_path.name})."

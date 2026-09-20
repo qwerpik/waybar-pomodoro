@@ -112,6 +112,15 @@ new bindings
         self.assertIn("[dry-run]", msg)
         self.assertEqual(cfg.read_text(), "existing")
 
+    def test_append_creates_unique_backups(self) -> None:
+        cfg = self.base_dir / "test_config"
+        cfg.write_text("existing")
+        append_keybindings(cfg, "snippet-one", dry_run=False)
+        append_keybindings(cfg, "snippet-two", dry_run=False)
+        backups = sorted(self.base_dir.glob("test_config.bak.*"))
+        self.assertEqual(len(backups), 2)
+        self.assertIn("snippet-two", cfg.read_text())
+
     def test_run_setup_invalid_compositor(self) -> None:
         ret = run_setup("nonexistent_wm")
         self.assertEqual(ret, 1)
